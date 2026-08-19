@@ -49,8 +49,7 @@
       <strong>⚠️ Security premise</strong>
       A publicly reachable dsh is a remote shell (dsh ships bash and filesystem tools).
       The relay's login gate is the only barrier between the internet and that shell —
-      set a strong <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code>
-      and strong per-tunnel passwords, and prefer end-to-end encryption. Do not expose
+      use a strong password per tunnel, and prefer end-to-end encryption. Do not expose
       dsh to a relay whose access policy you do not control.
     </div>
   </div>
@@ -90,12 +89,9 @@ A  *.tunnel.example.com  → &lt;relay IP&gt;   <span class="c"># the wildcard: 
           <div class="num"></div>
           <div class="body">
             <h3>Run the relay</h3>
-            <p><strong>Option A — npm (Node ≥ 20)</strong></p>
-            <pre>DSHN_APEX=tunnel.example.com \
-DSHN_RELAY_PORT=8787 \
-DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
-DSHN_CLAIMS=/var/lib/dshn/claims.json \
-  npx @dshn/relay</pre>
+            <p><strong>Option A — npm (Node ≥ 20)</strong>. The only thing you pass is your apex. The cookie secret is <strong>auto-generated and persisted</strong> on first run (no <code>openssl rand</code>), and claims + secret live together in <code>--data-dir</code>:</p>
+            <pre>npx @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn</pre>
+            <p style="margin-top: 10px;"><code>--help</code> lists every flag; each also has an env var (e.g. <code>DSHN_APEX</code>) if you prefer.</p>
             <p style="margin-top: 14px;">For long-term operation, register it as a systemd service (<code>DynamicUser</code> + <code>StateDirectory</code>, starts with the system):</p>
             <pre><span class="c"># /etc/systemd/system/dshn-relay.service</span>
 [Unit]
@@ -103,11 +99,7 @@ Description=dshn relay
 After=network.target
 
 [Service]
-Environment=DSHN_APEX=tunnel.example.com
-Environment=DSHN_RELAY_PORT=8787
-Environment=DSHN_COOKIE_SECRET=&lt;output of openssl rand -hex 32&gt;
-Environment=DSHN_CLAIMS=/var/lib/dshn/claims.json
-ExecStart=/usr/bin/npx --yes @dshn/relay
+ExecStart=/usr/bin/npx --yes @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn
 Restart=always
 DynamicUser=yes
 StateDirectory=dshn
@@ -119,11 +111,9 @@ WantedBy=multi-user.target</pre>
             <pre>docker run -d --name dshn-relay --restart unless-stopped \
   -p 8787:8787 \
   -e DSHN_APEX=tunnel.example.com \
-  -e DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
-  -e DSHN_CLAIMS=/data/claims.json \
   -v dshn-data:/data \
   ghcr.io/jsdvjx/dshn-relay:latest</pre>
-            <p style="margin-top: 10px;">The repository also provides a <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a> (<code>docker compose up -d</code>).</p>
+            <p style="margin-top: 10px;">The image defaults <code>--data-dir</code> to <code>/data</code>, so the auto-generated secret and claims persist on the <code>dshn-data</code> volume — nothing else to set. The repository also provides a <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a> (<code>DSHN_APEX=tunnel.example.com docker compose up -d</code>).</p>
           </div>
         </div>
         <div class="step">
@@ -145,11 +135,9 @@ WantedBy=multi-user.target</pre>
               Obtain a wildcard certificate for <code>*.apex</code> via Let's Encrypt DNS-01
               (<code>certbot --preferred-challenges dns</code>) and serve 443 directly:
             </p>
-            <pre>DSHN_APEX=tunnel.example.com DSHN_RELAY_PORT=443 \
-DSHN_COOKIE_SECRET=… DSHN_CLAIMS=/var/lib/dshn/claims.json \
-DSHN_TLS_CERT=/etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
-DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
-  npx @dshn/relay</pre>
+            <pre>npx @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn --port 443 \
+  --tls-cert /etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
+  --tls-key  /etc/letsencrypt/live/tunnel.example.com/privkey.pem</pre>
             <p style="margin-top: 10px;">Binding 443 requires root or <code>CAP_NET_BIND_SERVICE</code>; agents rely on the public CA and need no extra configuration.</p>
             <p style="margin-top: 14px;">
               <strong>Self-signed (private / internal).</strong>
@@ -162,7 +150,7 @@ DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
           <div class="num"></div>
           <div class="body">
             <h3>Point your dsh agents at your relay</h3>
-            <p>Install the plugin as usual, and set the relay host in the environment when launching dsh:</p>
+            <p>Install the plugin as usual. The easiest way is to pick <strong>Self-hosted</strong> in <strong>Settings → Public forwarding</strong> and paste your relay URL (no env var needed). Or set it when launching dsh:</p>
             <pre>dsh plugin --profile web add @dshn/agent
 DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
             <p style="margin-top: 10px;">
@@ -187,25 +175,27 @@ DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
   <section id="env">
     <div class="wrap">
       <span class="kicker">Reference</span>
-      <h2>Relay environment variables</h2>
+      <h2>Configuration reference</h2>
+      <p style="color: var(--muted); margin: -6px 0 18px;">Every setting is a CLI flag (<code>--flag value</code>) or the matching env var — <strong>flags win</strong>. Run <code>npx @dshn/relay --help</code> for the live list.</p>
       <div class="envwrap">
         <table class="env">
           <thead>
-            <tr><th>Variable</th><th>Required</th><th>Default</th><th>Purpose</th></tr>
+            <tr><th>Flag</th><th>Env var</th><th>Default</th><th>Purpose</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>DSHN_COOKIE_SECRET</code></td><td>✅</td><td>—</td><td>HMAC secret for login-session cookies (rotating it logs everyone out)</td></tr>
-            <tr><td><code>DSHN_APEX</code></td><td>—</td><td><code>ds.hn</code></td><td>the apex domain the wildcard hangs off</td></tr>
-            <tr><td><code>DSHN_RELAY_PORT</code></td><td>—</td><td><code>8787</code></td><td>listen port</td></tr>
-            <tr><td><code>DSHN_CLAIMS</code></td><td>—</td><td><code>./claims.json</code></td><td>JSON file the relay creates and maintains: subdomain → scrypt hash</td></tr>
-            <tr><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>—</td><td>PEM paths to serve HTTPS directly (omit to serve plain HTTP behind a TLS-terminating proxy)</td></tr>
-            <tr><td><code>DSHN_SITE</code></td><td>—</td><td>—</td><td>optional landing-page <code>index.html</code> for the bare apex (flat sibling .html/.css assets served too)</td></tr>
-            <tr><td><code>DSHN_DEBUG</code></td><td>—</td><td>—</td><td>set to log connection lifecycle to stderr</td></tr>
+            <tr><td><code>--apex</code></td><td><code>DSHN_APEX</code></td><td><code>ds.hn</code></td><td>the apex domain the wildcard hangs off</td></tr>
+            <tr><td><code>--data-dir</code></td><td><code>DSHN_DATA_DIR</code></td><td><code>./dshn-data</code></td><td>holds <code>claims.json</code> + the auto-generated <code>cookie-secret</code></td></tr>
+            <tr><td><code>--port</code></td><td><code>DSHN_RELAY_PORT</code></td><td><code>8787</code></td><td>listen port</td></tr>
+            <tr><td><code>--secret</code></td><td><code>DSHN_COOKIE_SECRET</code></td><td><em>auto-generated</em></td><td>cookie HMAC secret; set one only to pin it</td></tr>
+            <tr><td><code>--claims</code></td><td><code>DSHN_CLAIMS</code></td><td><code>&lt;data-dir&gt;/claims.json</code></td><td>claims JSON: subdomain → scrypt hash</td></tr>
+            <tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>PEM paths to serve HTTPS directly (omit for plain HTTP behind a TLS-terminating proxy)</td></tr>
+            <tr><td><code>--site</code></td><td><code>DSHN_SITE</code></td><td>—</td><td>optional landing-page <code>index.html</code> for the bare apex (flat sibling .html/.css served too)</td></tr>
+            <tr><td>—</td><td><code>DSHN_DEBUG</code></td><td>—</td><td>set to log connection lifecycle to stderr</td></tr>
           </tbody>
         </table>
       </div>
       <div class="sec-list">
-        <div class="sec-item"><span class="mark">✅</span><p><strong>Fails closed.</strong> The relay refuses to start without <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code> — misconfiguration results in a failed start, never an unauthenticated relay.</p></div>
+        <div class="sec-item"><span class="mark">🔑</span><p><strong>Zero-config secret.</strong> You don't set a cookie secret: on first run the relay generates a strong random one and saves it to <code style="font-family: var(--mono); font-size: 13px;">&lt;data-dir&gt;/cookie-secret</code> (mode 600), reusing it on restart so sessions survive.</p></div>
         <div class="sec-item"><span class="mark">💾</span><p><strong>Back up claims.json.</strong> It is the only record of subdomain ownership; losing it frees every name for re-claiming. It is written atomically with mode 600.</p></div>
         <div class="sec-item"><span class="mark">1️⃣</span><p><strong>One agent per subdomain.</strong> Exactly one live agent may hold a subdomain at a time; a second agent with the same credential replaces the first. Run one agent per (subdomain, password).</p></div>
       </div>

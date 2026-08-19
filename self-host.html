@@ -47,8 +47,7 @@
     <div class="callout">
       <strong>⚠️ 安全前提</strong>
       公网可达的 dsh 是一个远程 Shell（dsh 内置 bash 与文件系统工具）。中继的登录门禁是互联网与该
-      Shell 之间的唯一屏障 —— 请设置高强度的 <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code>
-      与各隧道密码，并优先启用端到端加密。不要向你无法控制访问策略的中继暴露 dsh。
+      Shell 之间的唯一屏障 —— 请为每条隧道设置高强度密码，并优先启用端到端加密。不要向你无法控制访问策略的中继暴露 dsh。
     </div>
   </div>
 
@@ -87,12 +86,9 @@ A  *.tunnel.example.com  → &lt;中继 IP&gt;   <span class="c"># 泛解析：�
           <div class="num"></div>
           <div class="body">
             <h3>运行中继</h3>
-            <p><strong>方式 A —— npm（Node ≥ 20）</strong></p>
-            <pre>DSHN_APEX=tunnel.example.com \
-DSHN_RELAY_PORT=8787 \
-DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
-DSHN_CLAIMS=/var/lib/dshn/claims.json \
-  npx @dshn/relay</pre>
+            <p><strong>方式 A —— npm（Node ≥ 20）</strong>。唯一必填的只有 apex。登录密钥会在首次运行时<strong>自动生成并持久化</strong>（不用 <code>openssl rand</code>），claims 文件与密钥都放在 <code>--data-dir</code> 里：</p>
+            <pre>npx @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn</pre>
+            <p style="margin-top: 10px;"><code>--help</code> 列出全部参数；每个参数也有对应环境变量（如 <code>DSHN_APEX</code>），二选一即可。</p>
             <p style="margin-top: 14px;">长期运行建议注册为 systemd 服务（<code>DynamicUser</code> + <code>StateDirectory</code>，随系统自启）：</p>
             <pre><span class="c"># /etc/systemd/system/dshn-relay.service</span>
 [Unit]
@@ -100,11 +96,7 @@ Description=dshn relay
 After=network.target
 
 [Service]
-Environment=DSHN_APEX=tunnel.example.com
-Environment=DSHN_RELAY_PORT=8787
-Environment=DSHN_COOKIE_SECRET=&lt;openssl rand -hex 32 的结果&gt;
-Environment=DSHN_CLAIMS=/var/lib/dshn/claims.json
-ExecStart=/usr/bin/npx --yes @dshn/relay
+ExecStart=/usr/bin/npx --yes @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn
 Restart=always
 DynamicUser=yes
 StateDirectory=dshn
@@ -116,11 +108,9 @@ WantedBy=multi-user.target</pre>
             <pre>docker run -d --name dshn-relay --restart unless-stopped \
   -p 8787:8787 \
   -e DSHN_APEX=tunnel.example.com \
-  -e DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
-  -e DSHN_CLAIMS=/data/claims.json \
   -v dshn-data:/data \
   ghcr.io/jsdvjx/dshn-relay:latest</pre>
-            <p style="margin-top: 10px;">仓库亦提供 <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a>（<code>docker compose up -d</code>）。</p>
+            <p style="margin-top: 10px;">镜像默认把 <code>--data-dir</code> 设为 <code>/data</code>，自动生成的密钥与 claims 都持久化在 <code>dshn-data</code> 卷上——除了 apex 无需再设任何东西。仓库亦提供 <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a>（<code>DSHN_APEX=tunnel.example.com docker compose up -d</code>）。</p>
           </div>
         </div>
         <div class="step">
@@ -140,11 +130,9 @@ WantedBy=multi-user.target</pre>
               通过 Let's Encrypt DNS-01（<code>certbot --preferred-challenges dns</code>）签发
               <code>*.apex</code> 通配符证书，中继直接服务 443：
             </p>
-            <pre>DSHN_APEX=tunnel.example.com DSHN_RELAY_PORT=443 \
-DSHN_COOKIE_SECRET=… DSHN_CLAIMS=/var/lib/dshn/claims.json \
-DSHN_TLS_CERT=/etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
-DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
-  npx @dshn/relay</pre>
+            <pre>npx @dshn/relay --apex tunnel.example.com --data-dir /var/lib/dshn --port 443 \
+  --tls-cert /etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
+  --tls-key  /etc/letsencrypt/live/tunnel.example.com/privkey.pem</pre>
             <p style="margin-top: 10px;">绑定 443 需要 root 或 <code>CAP_NET_BIND_SERVICE</code>；agent 走公共 CA，无需额外配置。</p>
             <p style="margin-top: 14px;">
               <strong>自签证书（私有 / 内网）。</strong>
@@ -157,7 +145,7 @@ DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
           <div class="num"></div>
           <div class="body">
             <h3>将 dsh agent 指向你的中继</h3>
-            <p>照常安装插件，启动 dsh 时通过环境变量指定中继地址：</p>
+            <p>照常安装插件后,最简单的方式是在 <strong>设置 → 公网转发</strong> 里选 <strong>自托管</strong>、填入中继地址即可(无需环境变量)。或在启动 dsh 时用环境变量指定:</p>
             <pre>dsh plugin --profile web add @dshn/agent
 DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
             <p style="margin-top: 10px;">
@@ -179,25 +167,27 @@ DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
   <section id="env">
     <div class="wrap">
       <span class="kicker">参考</span>
-      <h2>中继环境变量</h2>
+      <h2>配置参考</h2>
+      <p style="color: var(--muted); margin: -6px 0 18px;">每个配置项都是命令行参数（<code>--flag value</code>）或对应的环境变量，<strong>参数优先</strong>。<code>npx @dshn/relay --help</code> 查看实时列表。</p>
       <div class="envwrap">
         <table class="env">
           <thead>
-            <tr><th>变量</th><th>必填</th><th>默认值</th><th>用途</th></tr>
+            <tr><th>参数</th><th>环境变量</th><th>默认值</th><th>用途</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>DSHN_COOKIE_SECRET</code></td><td>✅</td><td>—</td><td>登录会话 Cookie 的 HMAC 密钥（轮换后所有会话登出）</td></tr>
-            <tr><td><code>DSHN_APEX</code></td><td>—</td><td><code>ds.hn</code></td><td>泛解析所挂靠的 apex 域名</td></tr>
-            <tr><td><code>DSHN_RELAY_PORT</code></td><td>—</td><td><code>8787</code></td><td>监听端口</td></tr>
-            <tr><td><code>DSHN_CLAIMS</code></td><td>—</td><td><code>./claims.json</code></td><td>中继自建自维护的认领表：子域 → scrypt 哈希</td></tr>
-            <tr><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>—</td><td>PEM 路径，直接服务 HTTPS（省略则为明文 HTTP，置于 TLS 终结代理之后）</td></tr>
-            <tr><td><code>DSHN_SITE</code></td><td>—</td><td>—</td><td>裸 apex 的落地页 <code>index.html</code>（同目录扁平 .html/.css 一并服务）</td></tr>
-            <tr><td><code>DSHN_DEBUG</code></td><td>—</td><td>—</td><td>设置后将连接生命周期日志输出至 stderr</td></tr>
+            <tr><td><code>--apex</code></td><td><code>DSHN_APEX</code></td><td><code>ds.hn</code></td><td>泛解析所挂靠的 apex 域名</td></tr>
+            <tr><td><code>--data-dir</code></td><td><code>DSHN_DATA_DIR</code></td><td><code>./dshn-data</code></td><td>存放 <code>claims.json</code> 与自动生成的 <code>cookie-secret</code></td></tr>
+            <tr><td><code>--port</code></td><td><code>DSHN_RELAY_PORT</code></td><td><code>8787</code></td><td>监听端口</td></tr>
+            <tr><td><code>--secret</code></td><td><code>DSHN_COOKIE_SECRET</code></td><td><em>自动生成</em></td><td>Cookie HMAC 密钥；想固定时才设置</td></tr>
+            <tr><td><code>--claims</code></td><td><code>DSHN_CLAIMS</code></td><td><code>&lt;data-dir&gt;/claims.json</code></td><td>认领表：子域 → scrypt 哈希</td></tr>
+            <tr><td><code>--tls-cert</code> / <code>--tls-key</code></td><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>PEM 路径，直接服务 HTTPS（省略则明文 HTTP，置于 TLS 终结代理之后）</td></tr>
+            <tr><td><code>--site</code></td><td><code>DSHN_SITE</code></td><td>—</td><td>裸 apex 的落地页 <code>index.html</code>（同目录扁平 .html/.css 一并服务）</td></tr>
+            <tr><td>—</td><td><code>DSHN_DEBUG</code></td><td>—</td><td>设置后将连接生命周期日志输出至 stderr</td></tr>
           </tbody>
         </table>
       </div>
       <div class="sec-list">
-        <div class="sec-item"><span class="mark">✅</span><p><strong>失败即关闭。</strong>缺少 <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code> 时中继拒绝启动 —— 配置错误导致启动失败，而非无鉴权运行。</p></div>
+        <div class="sec-item"><span class="mark">🔑</span><p><strong>密钥零配置。</strong>无需设置 Cookie 密钥：首次运行自动生成强随机密钥并存入 <code style="font-family: var(--mono); font-size: 13px;">&lt;data-dir&gt;/cookie-secret</code>（权限 600），重启复用、会话不失效。</p></div>
         <div class="sec-item"><span class="mark">💾</span><p><strong>备份 claims.json。</strong>它是子域归属的唯一记录，丢失后所有名称可被重新认领。文件以原子方式写入，权限 600。</p></div>
         <div class="sec-item"><span class="mark">1️⃣</span><p><strong>一个子域一个 agent。</strong>同一时间仅允许一个在线 agent 持有子域；相同凭据的第二个 agent 会替换第一个。请按「(子域, 密码) 对应一个 agent」运行。</p></div>
       </div>
