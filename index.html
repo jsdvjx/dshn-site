@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</title>
-<meta name="description" content="ds.hn（DeepSeek Harness Network）：一个子域、一个密码，把你本地运行的 dsh 安全地发布到 你的名字.ds.hn — 登录门禁、端到端加密、Cloudflare 边缘加速。">
+<meta name="description" content="ds.hn（DeepSeek Harness Network）：一个子域、一个密码，将本地运行的 dsh 安全地发布到 你的名字.ds.hn — 登录门禁、端到端加密、Cloudflare 边缘加速。">
 <link rel="alternate" hreflang="zh-CN" href="https://ds.hn/">
 <link rel="alternate" hreflang="en" href="https://ds.hn/en">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
@@ -27,7 +27,7 @@
       <a class="opt" href="#how">原理</a>
       <a href="#start">快速开始</a>
       <a class="opt" href="#faq">FAQ</a>
-      <a href="https://github.com/jsdvjx/dshn-site">GitHub</a>
+      <a href="https://github.com/jsdvjx/dshn">GitHub</a>
       <span class="lang"><a class="on" href="./">中文</a><a href="en.html">EN</a></span>
     </nav>
   </div>
@@ -39,9 +39,9 @@
     <span class="badge">ds.hn — <b>D</b>eep<b>S</b>eek <b>H</b>arness <b>N</b>etwork</span>
     <h1>把本地 dsh<br><span class="grad">安全地开到公网</span></h1>
     <p class="sub">
-      一个子域、一个密码，就是全部凭据。装上插件、在对话框里起个名字，
-      你本地运行的 dsh 就有了带登录门禁的公网地址 —— 手机、外网、随处可达。
-      开启<strong>端到端加密</strong>后，内容穿过中继时只是密文。
+      一个子域、一个密码，即是全部凭据。安装插件、选定名称，
+      本地运行的 dsh 即拥有带登录门禁的公网地址，任何设备均可访问。
+      开启<strong>端到端加密</strong>后，内容经过中继时始终为密文。
     </p>
     <div class="url-demo">
       <span class="lock">🔒</span>
@@ -59,24 +59,24 @@
       <h2>为什么需要 ds.hn</h2>
       <p class="lead">
         ds.hn 的名字来自 <strong>DeepSeek Harness Network</strong> ——
-        为每一个本地运行的 dsh（DeepSeek Harness）提供一个公网入口。
-        dsh 是跑在你自己机器上的本地 Web UI。它很好用 —— 直到你想在手机上继续会话、
-        出门后接着看任务进度，或者把界面递给同事看一眼。这时你需要把
-        <code>127.0.0.1</code> 暴露到公网，而这有两个坑：
+        为每一个本地运行的 dsh（DeepSeek Harness）提供公网入口。
+        dsh 是运行在你自己机器上的本地 Web UI；当你需要在手机上继续会话、
+        在外部网络查看任务进度，或将界面共享给同事时，就必须把
+        <code>127.0.0.1</code> 暴露到公网 —— 而这存在两个问题：
       </p>
       <p class="lead">
-        <strong>其一，普通隧道根本打不通。</strong> dsh 的 <code>/api</code>
-        有一道浏览器信任栅栏：请求的 Host 不是本机回环就直接 403。ngrok、frp 这类通用隧道原样转发公网
-        Host，页面能开、接口全挂。
+        <strong>其一，通用隧道无法工作。</strong> dsh 的 <code>/api</code>
+        设有浏览器信任栅栏：请求的 Host 若非本机回环地址，一律返回 403。ngrok、frp
+        等通用隧道原样转发公网 Host —— 页面可以加载，接口调用全部失败。
       </p>
       <p class="lead">
-        <strong>其二，裸暴露等于交出一个远程 Shell。</strong> dsh 自带 bash 和文件系统工具，
-        一个没有门禁的公网 dsh，就是任何人都能用的你机器上的终端。
+        <strong>其二，直接暴露等于交出一个远程 Shell。</strong> dsh 内置 bash 与文件系统工具，
+        一个没有访问控制的公网 dsh，就是一个对任何人开放的远程终端。
       </p>
       <p class="lead">
-        dshn 插件用「插件」这个身份同时解决两件事：它在 dsh 内部把每个转发请求的 Host/Origin
-        回写为本机回环，信任栅栏照常放行；同时所有公网访问都必须先过中继的登录门禁 ——
-        安全由门禁负责，而不是靠栅栏硬扛。
+        dshn 以插件形态同时解决这两个问题：它在 dsh 内部将每个转发请求的 Host/Origin
+        重写为本机回环地址，信任栅栏照常放行；同时所有公网访问必须先通过中继的登录门禁 ——
+        安全由门禁承担，而非依赖信任栅栏。
       </p>
     </div>
   </section>
@@ -89,42 +89,42 @@
         <div class="card">
           <div class="ico">⚡️</div>
           <h3>一分钟注册，零审批</h3>
-          <p>子域前缀 + 密码，两样就是全部凭据。没有 token、没有环境变量、没有等待审核 —— 先到先得，第一个认领子域的人设定它的密码（服务端只存 scrypt 哈希）。</p>
+          <p>子域前缀与密码即是全部凭据。无 token、无环境变量、无人工审核 —— 先到先得，首个认领子域者设定其密码（服务端仅存 scrypt 哈希）。</p>
         </div>
         <div class="card">
           <div class="ico">🚪</div>
           <h3>登录门禁</h3>
-          <p>公网访客必须输入同一密码，换取按域名限定、HMAC 签名的 Cookie 后才会被代理。15 分钟内错 8 次即锁定 10 分钟，且按访客 IP 计，攻击者锁不住你自己。</p>
+          <p>公网访客必须提供同一密码，换取按域名限定、HMAC 签名的 Cookie 后才会被代理。15 分钟内错误 8 次即锁定 10 分钟，按访客 IP 计数，攻击者无法锁定子域所有者。</p>
         </div>
         <div class="card hl">
           <div class="ico">🔐</div>
           <h3>端到端加密</h3>
-          <p>再设一个独立的 E2E 密码（永不发给服务器），API 内容以 AES-256-GCM 封装 —— 中继运营方与 Cloudflare 都只见密文。<a href="#e2e">了解更多 →</a></p>
+          <p>额外设置一个独立的 E2E 密码（不会发送至任何服务器），API 内容以 AES-256-GCM 封装 —— 中继运营方与 Cloudflare 均只能见到密文。<a href="#e2e">了解更多 →</a></p>
         </div>
         <div class="card">
           <div class="ico">🌍</div>
           <h3>Cloudflare 边缘</h3>
-          <p>所有 <code>*.ds.hn</code> 流量走 Cloudflare 全球边缘：免费 DDoS 防护、WAF、TLS、Anycast 加速，源站 IP 对外不可见。</p>
+          <p>所有 <code>*.ds.hn</code> 流量经 Cloudflare 全球边缘：免费 DDoS 防护、WAF、TLS、Anycast 加速，源站 IP 对外不可见。</p>
         </div>
         <div class="card">
           <div class="ico">🧩</div>
-          <h3>原生长在 dsh 里</h3>
-          <p>配置就在 dsh 自己的设置页「公网转发」一节；侧栏常驻入口实时显示隧道延迟（Cloudflare 链路实测 ~18ms）。不是外挂脚本，是一等公民插件。</p>
+          <h3>原生集成于 dsh</h3>
+          <p>配置位于 dsh 设置页「公网转发」一节；侧栏常驻入口实时显示隧道延迟（Cloudflare 链路实测约 18ms）。深度集成的一等公民插件，而非外部脚本。</p>
         </div>
         <div class="card">
           <div class="ico">🔁</div>
           <h3>断线自愈</h3>
-          <p>双端每 25 秒心跳保活，掉线自动重连；凭据持久化在本地配置中，dsh 重启后隧道自动恢复，无需重新设置。</p>
+          <p>双端每 25 秒心跳保活，连接中断后自动重连；凭据持久化于本地配置，dsh 重启后隧道自动恢复，无需重新设置。</p>
         </div>
         <div class="card">
           <div class="ico">📡</div>
           <h3>完整协议转发</h3>
-          <p>HTTP 与 dsh 的事件 WebSocket 全量回放，一条多路复用 WSS 承载全部流量。真实页面 40 个资源包加载 0 失败。</p>
+          <p>HTTP 与 dsh 的事件 WebSocket 完整回放，单条多路复用 WSS 承载全部流量。真实页面 40 个资源包加载零失败。</p>
         </div>
         <div class="card">
           <div class="ico">🛡</div>
-          <h3>管理面只在本机</h3>
-          <p>插件的管理接口在隧道里一律 404，改配置、看密码只能在你自己机器上进行。子域至少 4 字符、密码至少 8 位，断开连接需二次确认。</p>
+          <h3>管理接口仅限本机</h3>
+          <p>插件管理接口在隧道侧一律返回 404，修改配置、查看密码仅能在本机进行。子域不少于 4 字符、密码不少于 8 位，断开连接需二次确认。</p>
         </div>
       </div>
     </div>
@@ -135,9 +135,9 @@
       <span class="kicker">端到端加密</span>
       <h2>密文穿过中继，明文只在两端</h2>
       <p class="lead">
-        登录门禁挡住陌生人；端到端加密更进一步 —— 你的会话内容，<strong>连中继运营方、连
-        Cloudflare 都读不到</strong>。再设一个独立的 🔒 E2E 密码，它永远不会发给任何服务器：
-        你的浏览器用它加密，你的机器用它解密，中间每一跳经手的都只是密文。
+        登录门禁阻挡未授权访客；端到端加密更进一步 —— 会话内容<strong>对中继运营方与
+        Cloudflare 同样不可读</strong>。额外设置一个独立的 🔒 E2E 密码，它不会发送至任何服务器：
+        浏览器以其加密、你的机器以其解密，中间各跳传递的始终是密文。
       </p>
       <div class="cflow">
         <div class="cnode clear">
@@ -149,45 +149,45 @@
         <div class="cnode">
           <div class="ci">☁️</div>
           <div class="ct">Cloudflare</div>
-          <div class="cd">只见密文</div>
+          <div class="cd">仅见密文</div>
         </div>
         <div class="carrow"><b>→</b>密文</div>
         <div class="cnode">
           <div class="ci">🖥</div>
           <div class="ct">中继</div>
-          <div class="cd">只见密文</div>
+          <div class="cd">仅见密文</div>
         </div>
         <div class="carrow"><b>→</b>密文</div>
         <div class="cnode clear">
           <div class="ci">🔓</div>
           <div class="ct">你的机器</div>
-          <div class="cd">插件持有密钥<br>本地解密后交给 dsh</div>
+          <div class="cd">插件持有密钥<br>本地解密后交付 dsh</div>
         </div>
       </div>
       <div class="grid">
         <div class="card">
           <div class="ico">🔑</div>
           <h3>密钥派生</h3>
-          <p>E2E 密码经 PBKDF2-SHA256（210,000 轮 + 随机盐）派生出 AES-256-GCM 密钥。盐是公开的；密码与密钥永不出你的设备。</p>
+          <p>E2E 密码经 PBKDF2-SHA256（210,000 轮，随机盐）派生 AES-256-GCM 密钥。盐值公开；密码与密钥不出本地设备。</p>
         </div>
         <div class="card">
           <div class="ico">🙈</div>
           <h3>服务器零内容</h3>
-          <p>中继与 Cloudflare 经手的 API 内容与事件流全部是密文 —— 即使服务器被入侵，攻击者翻查到的历史流量也不可读。</p>
+          <p>经过中继与 Cloudflare 的 API 内容与事件流全部为密文 —— 即使服务器被入侵，捕获的历史流量亦不可读。</p>
         </div>
         <div class="card">
           <div class="ico">📦</div>
           <h3>加密范围</h3>
-          <p><code>/api</code> 请求与响应、下行事件流全部封装；应用外壳与静态资源保持明文，浏览器才能完成引导。</p>
+          <p><code>/api</code> 请求与响应、下行事件流全部封装；应用外壳与静态资源保持明文，以保证浏览器完成引导。</p>
         </div>
         <div class="card">
           <div class="ico">🎚</div>
           <h3>一次设置，按需开启</h3>
-          <p>注册面板的 🔒 一栏填一次即可；远程访客首次打开会看到解锁框，输入同一 E2E 密码即通。本机 <code>127.0.0.1</code> 访问不受影响。</p>
+          <p>在注册面板的 🔒 字段设置一次即可；远程访客首次访问时输入同一 E2E 密码解锁。本机 <code>127.0.0.1</code> 访问不受影响。</p>
         </div>
       </div>
       <p class="e2e-note">
-        边界诚实说：它防的是「被动 / 好奇」的中继与服务器数据泄露；页面 JS 仍由中继下发，所以它不防主动篡改页面的中继
+        能力边界：端到端加密可防御被动读取的中继与服务器数据泄露；页面 JS 仍由中继下发，故无法防御主动篡改页面的中继
         —— 详见<a href="#security">安全边界</a>。
       </p>
     </div>
@@ -196,10 +196,10 @@
   <section id="how">
     <div class="wrap">
       <span class="kicker">原理</span>
-      <h2>它是怎么工作的</h2>
+      <h2>工作原理</h2>
       <p class="lead">
-        浏览器到你机器之间共四跳。中继是自托管的哑管道，只负责验密码和搬字节；
-        真正的「魔法」发生在最后一跳 —— 插件把请求还原成 dsh 眼中的本机请求。
+        浏览器到你的机器共四跳。中继是自托管的透明通道，仅负责验证密码与转发字节；
+        关键机制在最后一跳 —— 插件将请求还原为 dsh 视角下的本机请求。
       </p>
       <div class="flow">
         <div class="fnode">
@@ -219,26 +219,26 @@
         <div class="farrow">WSS 隧道（出站连接，无需公网 IP / 端口映射）</div>
         <div class="fnode hl">
           <span class="t">🧩 dshn-agent 插件</span>
-          <span class="d">把 Host/Origin 回写为 127.0.0.1，回放 HTTP 与 WebSocket</span>
+          <span class="d">将 Host/Origin 重写为 127.0.0.1，回放 HTTP 与 WebSocket</span>
         </div>
         <div class="farrow">http://127.0.0.1:&lt;port&gt;</div>
         <div class="fnode">
           <span class="t">💻 你本地的 dsh</span>
-          <span class="d">信任栅栏看到的是一个本机同源请求，照常放行</span>
+          <span class="d">信任栅栏视其为本机同源请求，照常放行</span>
         </div>
       </div>
       <div class="flow-notes">
         <div class="fnote">
           <h4>凭据即注册</h4>
-          <p>没有账号系统。第一个带着空闲子域连上来的插件完成「认领」，密码哈希落盘；之后的每次连接、每次浏览器登录都要对上同一密码 —— 天然防抢注。</p>
+          <p>没有账号体系。首个以空闲子域连接的插件即完成认领，密码哈希落盘；此后每次连接与每次浏览器登录都必须匹配同一密码 —— 从机制上杜绝抢注。</p>
         </div>
         <div class="fnote">
           <h4>出站连接，无需公网</h4>
-          <p>插件从你机器主动拨出 WSS 到中继，家庭宽带、NAT 之后、无公网 IP 都能用，不用配路由器端口映射。</p>
+          <p>插件从你的机器主动向中继发起 WSS 连接，家庭宽带、NAT 之后、无公网 IP 均可使用，无需配置端口映射。</p>
         </div>
         <div class="fnote">
-          <h4>中继只搬字节</h4>
-          <p>开启端到端加密后，中继与 Cloudflare 都只见密文；解密只发生在你的浏览器和你的机器两端。</p>
+          <h4>中继仅转发字节</h4>
+          <p>开启端到端加密后，中继与 Cloudflare 均只经手密文；解密仅发生在你的浏览器与你的机器两端。</p>
         </div>
       </div>
     </div>
@@ -248,21 +248,21 @@
     <div class="wrap">
       <span class="kicker">注册与引导</span>
       <h2>四步上线</h2>
-      <p class="lead">全程不需要打开任何注册网页 —— 注册这件事，就发生在 dsh 自己的界面里。</p>
+      <p class="lead">无需访问任何注册页面 —— 注册流程完全在 dsh 界面内完成。</p>
       <div class="steps">
         <div class="step">
           <div class="num"></div>
           <div class="body">
             <h3>安装插件</h3>
-            <p>把 dshn-agent 插件加入你的 dsh profile：</p>
-            <pre>dsh plugin --profile web add /path/to/dshn/dist/dshn-agent</pre>
+            <p>从 npm 安装 <code>@dshn/agent</code>（完全自包含；离线 tarball 与源码安装方式见 <a href="https://github.com/jsdvjx/dshn" style="color: var(--accent-text); text-decoration: none;">GitHub</a>）：</p>
+            <pre>dsh plugin --profile web add @dshn/agent</pre>
           </div>
         </div>
         <div class="step">
           <div class="num"></div>
           <div class="body">
             <h3>启动并打开本地 dsh</h3>
-            <p>照常启动，然后在浏览器打开本地地址：</p>
+            <p>照常启动，在浏览器打开本地地址：</p>
             <pre>dsh --profile web
 <span class="c"># 浏览器访问 http://127.0.0.1:3080</span></pre>
           </div>
@@ -270,12 +270,12 @@
         <div class="step">
           <div class="num"></div>
           <div class="body">
-            <h3>起名、设密码，点「连接」</h3>
+            <h3>设置子域与密码，点击「连接」</h3>
             <p>
-              首次打开会自动弹出注册面板（之后也能在 <strong>设置 → 公网转发</strong> 找到）：
-              填一个子域前缀（≥4 字符）和一个访问密码（≥8 位，带强度提示），并建议顺手在 🔒 一栏设置
-              <strong>端到端加密密码</strong> —— 让中继从第一天起就只见密文。
-              点「连接」，面板立即显示你的公网地址。
+              首次在本机打开时会自动弹出注册面板（此后位于 <strong>设置 → 公网转发</strong>）：
+              填写子域前缀（不少于 4 字符）与访问密码（不少于 8 位，带强度提示），建议同时在 🔒 字段设置
+              <strong>端到端加密密码</strong>，使中继自始至终仅经手密文。
+              点击「连接」后，面板即显示你的公网地址。
             </p>
           </div>
         </div>
@@ -285,17 +285,17 @@
             <h3>随处访问</h3>
             <p>
               在手机或任何设备上打开 <code>https://你的子域.ds.hn</code>，
-              输入同一个访问密码登录。如果设了端到端加密，页面会再弹一道解锁框，输入 E2E 密码即可。
+              输入同一访问密码登录。若已启用端到端加密，页面会再显示一道解锁框，输入 E2E 密码即可。
             </p>
           </div>
         </div>
       </div>
       <div class="callout">
-        <strong>⚠️ 三件必须知道的事</strong>
+        <strong>⚠️ 三项须知</strong>
         <ul>
-          <li><b>密码就是凭据，云端无法找回。</b>断开前先在面板里「复制密码」保存好 —— 子域认领后只认这个密码。</li>
-          <li><b>一个子域只跑一个插件实例。</b>两台机器用同一组凭据会互相顶掉，隧道反复闪断。</li>
-          <li><b>端到端加密只在远程访问时生效。</b>本机 127.0.0.1 打开不会出现解锁框，这是设计如此，不是没生效。</li>
+          <li><b>密码即凭据，云端无法找回。</b>断开连接前请先在面板中复制并妥善保存 —— 子域认领后仅认此密码。</li>
+          <li><b>一个子域仅运行一个插件实例。</b>两台设备使用同一组凭据会相互抢占连接，导致隧道反复中断。</li>
+          <li><b>端到端加密仅在远程访问时生效。</b>本机 127.0.0.1 访问不会出现解锁框 —— 这是设计行为，并非未生效。</li>
         </ul>
       </div>
     </div>
@@ -304,15 +304,15 @@
   <section id="security">
     <div class="wrap">
       <span class="kicker">安全</span>
-      <h2>边界说清楚</h2>
-      <p class="lead">公网可达的 dsh 本质上是一个远程 Shell。dshn 把风险摆在明面上，也把边界说在明面上：</p>
+      <h2>明确的边界</h2>
+      <p class="lead">公网可达的 dsh 本质上是一个远程 Shell。dshn 对风险与能力边界均如实说明：</p>
       <div class="sec-list">
-        <div class="sec-item"><span class="mark">✅</span><p><strong>登录门禁不可关闭。</strong>任何请求在验证密码换取签名 Cookie 之前，不会被代理到你的机器。</p></div>
-        <div class="sec-item"><span class="mark">✅</span><p><strong>暴力破解有锁。</strong>15 分钟内错 8 次锁 10 分钟，按「子域 + 访客 IP」计数，攻击者只能锁住他自己。</p></div>
-        <div class="sec-item"><span class="mark">✅</span><p><strong>管理接口出不了本机。</strong>查看密码、改配置、断开隧道的接口在公网侧一律 404，即使已登录的访客也碰不到。</p></div>
-        <div class="sec-item"><span class="mark">✅</span><p><strong>端到端加密防「好奇的中继」。</strong>开启后 API 内容以 AES-256-GCM 封装，中继运营方与 Cloudflare 只见密文，即使服务器被入侵，历史流量也不可读。</p></div>
-        <div class="sec-item"><span class="mark">⚠️</span><p><strong>它不防「主动作恶的中继」。</strong>页面本身（JS）仍由中继下发，一个主动篡改页面的中继理论上可以绕过 E2E。这需要 TLS 直通或原生客户端才能根治 —— 我们不假装已经做到。</p></div>
-        <div class="sec-item"><span class="mark">💡</span><p><strong>大流量可走直连。</strong>Cloudflare 在持续高吞吐下可能重置隧道连接；插件支持配置直连源站（自签证书钉扎），绕开边缘限制。</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>登录门禁不可关闭。</strong>任何请求在通过密码验证、换取签名 Cookie 之前，不会被代理至你的机器。</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>暴力破解防护。</strong>15 分钟内错误 8 次即锁定 10 分钟，按「子域 + 访客 IP」计数，攻击者仅会锁定自身。</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>管理接口不出本机。</strong>查看密码、修改配置、断开隧道的接口在公网侧一律返回 404，已登录访客亦无法访问。</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>端到端加密防御被动读取。</strong>开启后 API 内容以 AES-256-GCM 封装，中继运营方与 Cloudflare 仅见密文；即使服务器被入侵，历史流量亦不可读。</p></div>
+        <div class="sec-item"><span class="mark">⚠️</span><p><strong>无法防御主动作恶的中继。</strong>页面 JS 仍由中继下发，主动篡改页面的中继理论上可绕过 E2E。彻底解决需 TLS 直通或原生客户端 —— 我们不做超出实际能力的承诺。</p></div>
+        <div class="sec-item"><span class="mark">💡</span><p><strong>高吞吐可走直连。</strong>Cloudflare 在持续高吞吐下可能重置隧道连接；插件支持直连源站（自签证书钉扎），绕开边缘限制。</p></div>
       </div>
     </div>
   </section>
@@ -332,43 +332,43 @@
         <details>
           <summary>为什么不用 ngrok / frp / Cloudflare Tunnel？</summary>
           <div class="a">
-            通用隧道原样转发公网 Host，会被 dsh 的 <code>/api</code> 浏览器信任栅栏 403 —— 页面打得开，接口全报错。
-            而且它们默认没有登录门禁，等于把一个远程 Shell 裸奔在公网。dshn 作为 dsh 插件在内部完成 Host/Origin
-            回写，同时强制登录，两个问题一起解决。
+            通用隧道原样转发公网 Host，会被 dsh 的 <code>/api</code> 浏览器信任栅栏拒绝（403）——
+            页面可以加载，接口全部报错；且它们默认没有登录门禁，等于将一个远程 Shell 无防护地暴露于公网。
+            dshn 作为 dsh 插件在内部完成 Host/Origin 重写，同时强制登录，两个问题一并解决。
           </div>
         </details>
         <details>
-          <summary>子域是怎么分配的？会被人抢注吗？</summary>
+          <summary>子域是怎么分配的？会被抢注吗？</summary>
           <div class="a">
-            先到先得：第一个带着空闲子域连接的插件完成认领，同时设定这个子域的密码（服务端只存 scrypt 哈希）。
-            之后任何人想用这个子域连接，都必须对上同一密码 —— 抢注者拿不到你的密码，也就顶不掉你。
+            先到先得：首个以空闲子域连接的插件完成认领，同时设定该子域的密码（服务端仅存 scrypt 哈希）。
+            此后以该子域连接必须匹配同一密码 —— 未持有密码者无法顶替现有连接。
           </div>
         </details>
         <details>
           <summary>忘记密码了怎么办？</summary>
           <div class="a">
-            云端无法找回（服务端只有哈希）。只要你的插件还在本机运行，随时可以在面板里查看并复制当前密码；
-            所以请在断开连接之前先把密码复制保存好。凭据也会持久化在本地 dsh 配置中。
+            云端无法找回（服务端仅存哈希）。只要插件仍在本机运行，即可随时在面板中查看并复制当前密码；
+            请在断开连接前妥善保存。凭据同时持久化于本地 dsh 配置。
           </div>
         </details>
         <details>
-          <summary>流量经过哪些地方？限速吗？</summary>
+          <summary>流量经过哪些环节？有何限制？</summary>
           <div class="a">
-            浏览器 → Cloudflare 边缘 → 自托管中继 → 你机器上的插件 → 本地 dsh。边缘带宽不计量；
-            已知限制：Cloudflare 免费计划单次请求体上限 100MB（超大文件上传会被截），持续高吞吐场景建议启用直连源站模式。
+            浏览器 → Cloudflare 边缘 → 自托管中继 → 你机器上的插件 → 本地 dsh。边缘带宽不计量。
+            已知限制：Cloudflare 免费计划单次请求体上限 100MB；持续高吞吐场景建议启用直连源站模式。
           </div>
         </details>
         <details>
           <summary>我的机器需要公网 IP 或端口映射吗？</summary>
           <div class="a">
-            不需要。插件从你的机器主动向中继拨出一条 WSS 连接，家庭宽带、NAT、公司内网都能用。
+            不需要。插件从你的机器主动向中继发起 WSS 连接，家庭宽带、NAT、企业内网均可使用。
           </div>
         </details>
         <details>
-          <summary>端到端加密具体加密了什么？</summary>
+          <summary>端到端加密具体覆盖哪些内容？</summary>
           <div class="a">
-            <code>/api</code> 请求响应内容与下行事件消息（PBKDF2-SHA256 21 万轮派生密钥 → AES-256-GCM）。
-            应用外壳与静态资源保持明文以便浏览器引导。E2E 密码永远不会发给服务器，访客在浏览器里输入后本地解密。
+            <code>/api</code> 请求响应内容与下行事件消息（PBKDF2-SHA256 210,000 轮派生密钥 → AES-256-GCM）。
+            应用外壳与静态资源保持明文以完成浏览器引导。E2E 密码不会发送至服务器，访客在浏览器中输入后本地解密。
           </div>
         </details>
       </div>
@@ -380,7 +380,7 @@
 <footer>
   <div class="wrap frow">
     <span>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</span>
-    <span><a href="en.html">English</a> · <a href="https://github.com/jsdvjx/dshn-site">网站源码</a> · 自托管中继 · Cloudflare 边缘</span>
+    <span><a href="en.html">English</a> · <a href="https://github.com/jsdvjx/dshn">产品源码</a> · <a href="https://github.com/jsdvjx/dshn-site">网站源码</a></span>
   </div>
 </footer>
 
