@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-hosting · ds.hn — run your own DeepSeek Harness Network on your own domain</title>
+<meta name="description" content="No dependency on ds.hn: the relay ships as @dshn/relay (npm) and a Docker image, deployed on your own server and domain; dsh agents point at it with DSHN_RELAY_HOST.">
+<link rel="alternate" hreflang="zh-CN" href="https://ds.hn/self-host">
+<link rel="alternate" hreflang="en" href="https://ds.hn/self-host-en">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="en.html" title="ds.hn — DeepSeek Harness Network">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--accent)">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z"/>
+      </svg>
+      ds.hn
+    </a>
+    <nav class="nav-links">
+      <a class="opt" href="en.html">Home</a>
+      <a class="opt" href="#requirements">Requirements</a>
+      <a href="#steps">Deployment</a>
+      <a class="opt" href="#env">Environment</a>
+      <a href="https://github.com/jsdvjx/dshn/blob/main/SELF-HOSTING.md">GitHub</a>
+      <span class="lang"><a href="self-host.html">中文</a><a class="on" href="self-host-en.html">EN</a></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap page-hero">
+    <span class="kicker">Self-hosting</span>
+    <h1>Run your own network,<br>on your own domain</h1>
+    <p class="lead">
+      ds.hn is not the only gateway. The relay ships as <code>@dshn/relay</code>
+      (npm) and a Docker image, deployable on your own server and domain; dsh
+      instances install the same <code>@dshn/agent</code> plugin and point at your
+      relay with <code>DSHN_RELAY_HOST</code> — claims, the login gate, and
+      end-to-end encryption all work identically. The full guide lives in
+      <a href="https://github.com/jsdvjx/dshn/blob/main/SELF-HOSTING.md">SELF-HOSTING.md</a>.
+    </p>
+    <div class="callout">
+      <strong>⚠️ Security premise</strong>
+      A publicly reachable dsh is a remote shell (dsh ships bash and filesystem tools).
+      The relay's login gate is the only barrier between the internet and that shell —
+      set a strong <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code>
+      and strong per-tunnel passwords, and prefer end-to-end encryption. Do not expose
+      dsh to a relay whose access policy you do not control.
+    </div>
+  </div>
+
+  <section id="requirements">
+    <div class="wrap">
+      <span class="kicker">Requirements</span>
+      <h2>What you need</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🖥</div>
+          <h3>A server</h3>
+          <p>With a public IP. The relay is a single Node process using roughly 30 MB of RAM — hardware requirements are minimal.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌐</div>
+          <h3>A domain (the apex)</h3>
+          <p>A domain you can add DNS records to, e.g. <code>tunnel.example.com</code>. Two A records point at the relay's IP: the apex itself and the <code>*.apex</code> wildcard.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🔐</div>
+          <h3>TLS for *.apex</h3>
+          <p>Three options below. Wildcard certificates cover one label deep, so tunnel names stay flat (e.g. <code>alice.tunnel.example.com</code>) — the relay enforces this as well.</p>
+        </div>
+      </div>
+      <pre>A  tunnel.example.com    → &lt;relay IP&gt;   <span class="c"># the apex: agents dial it; also the login host</span>
+A  *.tunnel.example.com  → &lt;relay IP&gt;   <span class="c"># the wildcard: every tunnel lives here</span></pre>
+    </div>
+  </section>
+
+  <section id="steps">
+    <div class="wrap">
+      <span class="kicker">Deployment</span>
+      <h2>Three steps</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Run the relay</h3>
+            <p><strong>Option A — npm (Node ≥ 20)</strong></p>
+            <pre>DSHN_APEX=tunnel.example.com \
+DSHN_RELAY_PORT=8787 \
+DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
+DSHN_CLAIMS=/var/lib/dshn/claims.json \
+  npx @dshn/relay</pre>
+            <p style="margin-top: 14px;">For long-term operation, register it as a systemd service (<code>DynamicUser</code> + <code>StateDirectory</code>, starts with the system):</p>
+            <pre><span class="c"># /etc/systemd/system/dshn-relay.service</span>
+[Unit]
+Description=dshn relay
+After=network.target
+
+[Service]
+Environment=DSHN_APEX=tunnel.example.com
+Environment=DSHN_RELAY_PORT=8787
+Environment=DSHN_COOKIE_SECRET=&lt;output of openssl rand -hex 32&gt;
+Environment=DSHN_CLAIMS=/var/lib/dshn/claims.json
+ExecStart=/usr/bin/npx --yes @dshn/relay
+Restart=always
+DynamicUser=yes
+StateDirectory=dshn
+
+[Install]
+WantedBy=multi-user.target</pre>
+            <pre>sudo systemctl enable --now dshn-relay</pre>
+            <p style="margin-top: 14px;"><strong>Option B — Docker</strong></p>
+            <pre>docker run -d --name dshn-relay --restart unless-stopped \
+  -p 8787:8787 \
+  -e DSHN_APEX=tunnel.example.com \
+  -e DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
+  -e DSHN_CLAIMS=/data/claims.json \
+  -v dshn-data:/data \
+  ghcr.io/jsdvjx/dshn-relay:latest</pre>
+            <p style="margin-top: 10px;">The repository also provides a <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a> (<code>docker compose up -d</code>).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Configure TLS (pick one)</h3>
+            <p>The relay carries WebSockets, which require <code>wss://</code> (TLS) end-to-end.</p>
+            <p style="margin-top: 14px;">
+              <strong>Behind Cloudflare (simplest; hides your origin).</strong>
+              Proxy <code>*.apex</code> and the apex (orange cloud) to the relay. The relay
+              serves plain HTTP and Cloudflare terminates TLS; set SSL mode to <em>Full</em>.
+              Cloudflare closes idle WebSockets after roughly 100 seconds; the relay
+              heartbeats every 25, so tunnels are unaffected. Harden the origin to accept
+              only Cloudflare's IP ranges and enable Authenticated Origin Pulls — the
+              origin trusts <code>cf-connecting-ip</code>.
+            </p>
+            <p style="margin-top: 14px;">
+              <strong>Standalone with a real certificate (no Cloudflare).</strong>
+              Obtain a wildcard certificate for <code>*.apex</code> via Let's Encrypt DNS-01
+              (<code>certbot --preferred-challenges dns</code>) and serve 443 directly:
+            </p>
+            <pre>DSHN_APEX=tunnel.example.com DSHN_RELAY_PORT=443 \
+DSHN_COOKIE_SECRET=… DSHN_CLAIMS=/var/lib/dshn/claims.json \
+DSHN_TLS_CERT=/etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
+DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
+  npx @dshn/relay</pre>
+            <p style="margin-top: 10px;">Binding 443 requires root or <code>CAP_NET_BIND_SERVICE</code>; agents rely on the public CA and need no extra configuration.</p>
+            <p style="margin-top: 14px;">
+              <strong>Self-signed (private / internal).</strong>
+              Serve HTTPS with a self-signed certificate whose SAN covers <code>*.apex</code>,
+              and pin it on the agent side with <code>DSHN_ORIGIN_CA</code> (next step).
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Point your dsh agents at your relay</h3>
+            <p>Install the plugin as usual, and set the relay host in the environment when launching dsh:</p>
+            <pre>dsh plugin --profile web add @dshn/agent
+DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
+            <p style="margin-top: 10px;">
+              <code>DSHN_RELAY_HOST</code> takes any host that reaches your relay: the apex
+              works, as does the reserved <code>relay.&lt;apex&gt;</code> subdomain (users
+              cannot claim it); include the port when it is not 443
+              (<code>wss://tunnel.example.com:8787</code>). For a self-signed relay, also set
+              <code>DSHN_ORIGIN_CA</code> to the relay's certificate PEM, which the agent
+              pins as its sole CA.
+            </p>
+            <p style="margin-top: 10px;">
+              Then open dsh → <strong>Settings → Public forwarding</strong>, enter a subdomain
+              prefix and a password, and connect. The first agent to claim a free subdomain
+              sets its password (trust-on-first-use), stored as a scrypt hash on your relay.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="env">
+    <div class="wrap">
+      <span class="kicker">Reference</span>
+      <h2>Relay environment variables</h2>
+      <div class="envwrap">
+        <table class="env">
+          <thead>
+            <tr><th>Variable</th><th>Required</th><th>Default</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DSHN_COOKIE_SECRET</code></td><td>✅</td><td>—</td><td>HMAC secret for login-session cookies (rotating it logs everyone out)</td></tr>
+            <tr><td><code>DSHN_APEX</code></td><td>—</td><td><code>ds.hn</code></td><td>the apex domain the wildcard hangs off</td></tr>
+            <tr><td><code>DSHN_RELAY_PORT</code></td><td>—</td><td><code>8787</code></td><td>listen port</td></tr>
+            <tr><td><code>DSHN_CLAIMS</code></td><td>—</td><td><code>./claims.json</code></td><td>JSON file the relay creates and maintains: subdomain → scrypt hash</td></tr>
+            <tr><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>—</td><td>PEM paths to serve HTTPS directly (omit to serve plain HTTP behind a TLS-terminating proxy)</td></tr>
+            <tr><td><code>DSHN_SITE</code></td><td>—</td><td>—</td><td>optional landing-page <code>index.html</code> for the bare apex (flat sibling .html/.css assets served too)</td></tr>
+            <tr><td><code>DSHN_DEBUG</code></td><td>—</td><td>—</td><td>set to log connection lifecycle to stderr</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="sec-list">
+        <div class="sec-item"><span class="mark">✅</span><p><strong>Fails closed.</strong> The relay refuses to start without <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code> — misconfiguration results in a failed start, never an unauthenticated relay.</p></div>
+        <div class="sec-item"><span class="mark">💾</span><p><strong>Back up claims.json.</strong> It is the only record of subdomain ownership; losing it frees every name for re-claiming. It is written atomically with mode 600.</p></div>
+        <div class="sec-item"><span class="mark">1️⃣</span><p><strong>One agent per subdomain.</strong> Exactly one live agent may hold a subdomain at a time; a second agent with the same credential replaces the first. Run one agent per (subdomain, password).</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap frow">
+    <span>ds.hn · DeepSeek Harness Network — your local dsh, safely public</span>
+    <span><a href="en.html">Home</a> · <a href="self-host.html">中文</a> · <a href="https://github.com/jsdvjx/dshn">Product source</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

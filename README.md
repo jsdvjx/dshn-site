@@ -8,7 +8,8 @@
 
 - `index.html` — 中文主页（<https://ds.hn>）
 - `en.html` — English（<https://ds.hn/en>）
-- `site.css` — 两页共享样式
+- `self-host.html` / `self-host-en.html` — 自托管指南（<https://ds.hn/self-host> / `/self-host-en`），内容对齐产品仓库 `SELF-HOSTING.md`
+- `site.css` — 全站共享样式
 
 ## 本地预览
 

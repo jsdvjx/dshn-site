@@ -26,6 +26,7 @@
       <a class="opt" href="#e2e">Encryption</a>
       <a class="opt" href="#how">How it works</a>
       <a href="#start">Get started</a>
+      <a class="opt" href="self-host-en.html">Self-host</a>
       <a class="opt" href="#faq">FAQ</a>
       <a href="https://github.com/jsdvjx/dshn">GitHub</a>
       <span class="lang"><a href="./">中文</a><a class="on" href="en.html">EN</a></span>
@@ -392,6 +393,15 @@
           </div>
         </details>
         <details>
+          <summary>Can I run this without depending on ds.hn?</summary>
+          <div class="a">
+            Yes. The relay ships as <code>@dshn/relay</code> (npm) and a Docker image,
+            deployable on your own server and domain; dsh agents point at it with
+            <code>DSHN_RELAY_HOST</code>, and every capability works identically. See the
+            <a href="self-host-en.html" style="color: var(--accent-text); text-decoration: none;">self-hosting guide</a>.
+          </div>
+        </details>
+        <details>
           <summary>What exactly does end-to-end encryption cover?</summary>
           <div class="a">
             <code>/api</code> request/response bodies and downstream event messages
@@ -410,7 +420,7 @@
 <footer>
   <div class="wrap frow">
     <span>ds.hn · DeepSeek Harness Network — your local dsh, safely public</span>
-    <span><a href="./">中文</a> · <a href="https://github.com/jsdvjx/dshn">Product source</a> · <a href="https://github.com/jsdvjx/dshn-site">Site source</a></span>
+    <span><a href="./">中文</a> · <a href="self-host-en.html">Self-host</a> · <a href="https://github.com/jsdvjx/dshn">Product source</a> · <a href="https://github.com/jsdvjx/dshn-site">Site source</a></span>
   </div>
 </footer>
 

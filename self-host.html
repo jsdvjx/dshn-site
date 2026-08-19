@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自托管 · ds.hn — 在你自己的域名上运行 DeepSeek Harness Network</title>
+<meta name="description" content="无需依赖 ds.hn：中继以 @dshn/relay（npm）与 Docker 镜像发布，部署在你自己的服务器与域名上，dsh 侧通过 DSHN_RELAY_HOST 指向你的中继。">
+<link rel="alternate" hreflang="zh-CN" href="https://ds.hn/self-host">
+<link rel="alternate" hreflang="en" href="https://ds.hn/self-host-en">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="./" title="ds.hn — DeepSeek Harness Network">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--accent)">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z"/>
+      </svg>
+      ds.hn
+    </a>
+    <nav class="nav-links">
+      <a class="opt" href="./">首页</a>
+      <a class="opt" href="#requirements">准备条件</a>
+      <a href="#steps">部署步骤</a>
+      <a class="opt" href="#env">环境变量</a>
+      <a href="https://github.com/jsdvjx/dshn/blob/main/SELF-HOSTING.md">GitHub</a>
+      <span class="lang"><a class="on" href="self-host.html">中文</a><a href="self-host-en.html">EN</a></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap page-hero">
+    <span class="kicker">自托管</span>
+    <h1>在你自己的域名上，<br>运行你自己的网络</h1>
+    <p class="lead">
+      ds.hn 并非唯一入口。中继以 <code>@dshn/relay</code>（npm）与 Docker
+      镜像发布，可部署在你自己的服务器与域名之上；dsh 侧安装同一个
+      <code>@dshn/agent</code> 插件，通过 <code>DSHN_RELAY_HOST</code>
+      指向你的中继即可 —— 认领、门禁、端到端加密等全部能力保持一致。
+      完整文档见 <a href="https://github.com/jsdvjx/dshn/blob/main/SELF-HOSTING.md">SELF-HOSTING.md</a>。
+    </p>
+    <div class="callout">
+      <strong>⚠️ 安全前提</strong>
+      公网可达的 dsh 是一个远程 Shell（dsh 内置 bash 与文件系统工具）。中继的登录门禁是互联网与该
+      Shell 之间的唯一屏障 —— 请设置高强度的 <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code>
+      与各隧道密码，并优先启用端到端加密。不要向你无法控制访问策略的中继暴露 dsh。
+    </div>
+  </div>
+
+  <section id="requirements">
+    <div class="wrap">
+      <span class="kicker">准备条件</span>
+      <h2>你需要什么</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🖥</div>
+          <h3>一台服务器</h3>
+          <p>具备公网 IP。中继是单个 Node 进程，内存占用约 30 MB，对配置几乎没有要求。</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌐</div>
+          <h3>一个域名（apex）</h3>
+          <p>可添加 DNS 记录的域名，例如 <code>tunnel.example.com</code>。需要两条 A 记录指向中继 IP：apex 本身与 <code>*.apex</code> 泛解析。</p>
+        </div>
+        <div class="card">
+          <div class="ico">🔐</div>
+          <h3>一份 *.apex 的 TLS</h3>
+          <p>三种方案见下文。注意通配符证书仅覆盖一级子域，隧道名须保持单层（如 <code>alice.tunnel.example.com</code>）—— 中继亦强制此规则。</p>
+        </div>
+      </div>
+      <pre>A  tunnel.example.com    → &lt;中继 IP&gt;   <span class="c"># apex：agent 拨号目标，兼登录主机</span>
+A  *.tunnel.example.com  → &lt;中继 IP&gt;   <span class="c"># 泛解析：每条隧道都在这里</span></pre>
+    </div>
+  </section>
+
+  <section id="steps">
+    <div class="wrap">
+      <span class="kicker">部署</span>
+      <h2>三步完成</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>运行中继</h3>
+            <p><strong>方式 A —— npm（Node ≥ 20）</strong></p>
+            <pre>DSHN_APEX=tunnel.example.com \
+DSHN_RELAY_PORT=8787 \
+DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
+DSHN_CLAIMS=/var/lib/dshn/claims.json \
+  npx @dshn/relay</pre>
+            <p style="margin-top: 14px;">长期运行建议注册为 systemd 服务（<code>DynamicUser</code> + <code>StateDirectory</code>，随系统自启）：</p>
+            <pre><span class="c"># /etc/systemd/system/dshn-relay.service</span>
+[Unit]
+Description=dshn relay
+After=network.target
+
+[Service]
+Environment=DSHN_APEX=tunnel.example.com
+Environment=DSHN_RELAY_PORT=8787
+Environment=DSHN_COOKIE_SECRET=&lt;openssl rand -hex 32 的结果&gt;
+Environment=DSHN_CLAIMS=/var/lib/dshn/claims.json
+ExecStart=/usr/bin/npx --yes @dshn/relay
+Restart=always
+DynamicUser=yes
+StateDirectory=dshn
+
+[Install]
+WantedBy=multi-user.target</pre>
+            <pre>sudo systemctl enable --now dshn-relay</pre>
+            <p style="margin-top: 14px;"><strong>方式 B —— Docker</strong></p>
+            <pre>docker run -d --name dshn-relay --restart unless-stopped \
+  -p 8787:8787 \
+  -e DSHN_APEX=tunnel.example.com \
+  -e DSHN_COOKIE_SECRET=$(openssl rand -hex 32) \
+  -e DSHN_CLAIMS=/data/claims.json \
+  -v dshn-data:/data \
+  ghcr.io/jsdvjx/dshn-relay:latest</pre>
+            <p style="margin-top: 10px;">仓库亦提供 <a href="https://github.com/jsdvjx/dshn/blob/main/docker-compose.yml" style="color: var(--accent-text); text-decoration: none;">docker-compose.yml</a>（<code>docker compose up -d</code>）。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>配置 TLS（三选一）</h3>
+            <p>中继承载 WebSocket，全程需要 <code>wss://</code>（TLS）。</p>
+            <p style="margin-top: 14px;">
+              <strong>Cloudflare 之前置（最简单，且隐藏源站）。</strong>
+              将 <code>*.apex</code> 与 apex 以代理模式（橙色云）指向中继；中继本身服务明文
+              HTTP，由 Cloudflare 终结 TLS，SSL 模式设为 <em>Full</em>。Cloudflare
+              约 100 秒关闭空闲 WebSocket，中继每 25 秒心跳，隧道不受影响。请将源站加固为仅接受
+              Cloudflare IP 段并启用 Authenticated Origin Pulls —— 源站信任 <code>cf-connecting-ip</code>。
+            </p>
+            <p style="margin-top: 14px;">
+              <strong>独立部署 + 正式证书（不经 Cloudflare）。</strong>
+              通过 Let's Encrypt DNS-01（<code>certbot --preferred-challenges dns</code>）签发
+              <code>*.apex</code> 通配符证书，中继直接服务 443：
+            </p>
+            <pre>DSHN_APEX=tunnel.example.com DSHN_RELAY_PORT=443 \
+DSHN_COOKIE_SECRET=… DSHN_CLAIMS=/var/lib/dshn/claims.json \
+DSHN_TLS_CERT=/etc/letsencrypt/live/tunnel.example.com/fullchain.pem \
+DSHN_TLS_KEY=/etc/letsencrypt/live/tunnel.example.com/privkey.pem \
+  npx @dshn/relay</pre>
+            <p style="margin-top: 10px;">绑定 443 需要 root 或 <code>CAP_NET_BIND_SERVICE</code>；agent 走公共 CA，无需额外配置。</p>
+            <p style="margin-top: 14px;">
+              <strong>自签证书（私有 / 内网）。</strong>
+              以 SAN 覆盖 <code>*.apex</code> 的自签证书服务 HTTPS，agent 侧用
+              <code>DSHN_ORIGIN_CA</code> 钉扎该证书（见下一步）。
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>将 dsh agent 指向你的中继</h3>
+            <p>照常安装插件，启动 dsh 时通过环境变量指定中继地址：</p>
+            <pre>dsh plugin --profile web add @dshn/agent
+DSHN_RELAY_HOST=wss://tunnel.example.com dsh --profile web</pre>
+            <p style="margin-top: 10px;">
+              <code>DSHN_RELAY_HOST</code> 填能到达中继的主机：apex 可用，保留字子域
+              <code>relay.&lt;apex&gt;</code>（用户不可认领）亦可；非 443 端口需显式写出（如
+              <code>wss://tunnel.example.com:8787</code>）。自签证书场景另设
+              <code>DSHN_ORIGIN_CA</code> 指向中继证书 PEM，agent 将其钉扎为唯一 CA。
+            </p>
+            <p style="margin-top: 10px;">
+              随后打开 dsh → <strong>设置 → 公网转发</strong>，填写子域前缀与密码并连接。
+              首个认领空闲子域的 agent 设定其密码（信任首次使用），以 scrypt 哈希存储在你的中继上。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="env">
+    <div class="wrap">
+      <span class="kicker">参考</span>
+      <h2>中继环境变量</h2>
+      <div class="envwrap">
+        <table class="env">
+          <thead>
+            <tr><th>变量</th><th>必填</th><th>默认值</th><th>用途</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DSHN_COOKIE_SECRET</code></td><td>✅</td><td>—</td><td>登录会话 Cookie 的 HMAC 密钥（轮换后所有会话登出）</td></tr>
+            <tr><td><code>DSHN_APEX</code></td><td>—</td><td><code>ds.hn</code></td><td>泛解析所挂靠的 apex 域名</td></tr>
+            <tr><td><code>DSHN_RELAY_PORT</code></td><td>—</td><td><code>8787</code></td><td>监听端口</td></tr>
+            <tr><td><code>DSHN_CLAIMS</code></td><td>—</td><td><code>./claims.json</code></td><td>中继自建自维护的认领表：子域 → scrypt 哈希</td></tr>
+            <tr><td><code>DSHN_TLS_CERT</code> / <code>DSHN_TLS_KEY</code></td><td>—</td><td>—</td><td>PEM 路径，直接服务 HTTPS（省略则为明文 HTTP，置于 TLS 终结代理之后）</td></tr>
+            <tr><td><code>DSHN_SITE</code></td><td>—</td><td>—</td><td>裸 apex 的落地页 <code>index.html</code>（同目录扁平 .html/.css 一并服务）</td></tr>
+            <tr><td><code>DSHN_DEBUG</code></td><td>—</td><td>—</td><td>设置后将连接生命周期日志输出至 stderr</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="sec-list">
+        <div class="sec-item"><span class="mark">✅</span><p><strong>失败即关闭。</strong>缺少 <code style="font-family: var(--mono); font-size: 13px;">DSHN_COOKIE_SECRET</code> 时中继拒绝启动 —— 配置错误导致启动失败，而非无鉴权运行。</p></div>
+        <div class="sec-item"><span class="mark">💾</span><p><strong>备份 claims.json。</strong>它是子域归属的唯一记录，丢失后所有名称可被重新认领。文件以原子方式写入，权限 600。</p></div>
+        <div class="sec-item"><span class="mark">1️⃣</span><p><strong>一个子域一个 agent。</strong>同一时间仅允许一个在线 agent 持有子域；相同凭据的第二个 agent 会替换第一个。请按「(子域, 密码) 对应一个 agent」运行。</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap frow">
+    <span>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</span>
+    <span><a href="./">首页</a> · <a href="self-host-en.html">English</a> · <a href="https://github.com/jsdvjx/dshn">产品源码</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

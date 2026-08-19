@@ -26,6 +26,7 @@
       <a class="opt" href="#e2e">加密</a>
       <a class="opt" href="#how">原理</a>
       <a href="#start">快速开始</a>
+      <a class="opt" href="self-host.html">自托管</a>
       <a class="opt" href="#faq">FAQ</a>
       <a href="https://github.com/jsdvjx/dshn">GitHub</a>
       <span class="lang"><a class="on" href="./">中文</a><a href="en.html">EN</a></span>
@@ -365,6 +366,14 @@
           </div>
         </details>
         <details>
+          <summary>可以不依赖 ds.hn，自己搭一套吗？</summary>
+          <div class="a">
+            可以。中继以 <code>@dshn/relay</code>（npm）与 Docker 镜像发布，部署在你自己的服务器与域名上，
+            dsh 侧通过 <code>DSHN_RELAY_HOST</code> 指向你的中继，全部能力保持一致。
+            参见<a href="self-host.html" style="color: var(--accent-text); text-decoration: none;">自托管指南</a>。
+          </div>
+        </details>
+        <details>
           <summary>端到端加密具体覆盖哪些内容？</summary>
           <div class="a">
             <code>/api</code> 请求响应内容与下行事件消息（PBKDF2-SHA256 210,000 轮派生密钥 → AES-256-GCM）。
@@ -380,7 +389,7 @@
 <footer>
   <div class="wrap frow">
     <span>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</span>
-    <span><a href="en.html">English</a> · <a href="https://github.com/jsdvjx/dshn">产品源码</a> · <a href="https://github.com/jsdvjx/dshn-site">网站源码</a></span>
+    <span><a href="en.html">English</a> · <a href="self-host.html">自托管</a> · <a href="https://github.com/jsdvjx/dshn">产品源码</a> · <a href="https://github.com/jsdvjx/dshn-site">网站源码</a></span>
   </div>
 </footer>
 
