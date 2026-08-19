@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ds.hn · DeepSeek Harness Network — your local dsh, safely on the public internet</title>
+<meta name="description" content="ds.hn (DeepSeek Harness Network): one subdomain, one password — publish your locally-running dsh to yourname.ds.hn with a login gate, end-to-end encryption, and Cloudflare's edge.">
+<link rel="alternate" hreflang="zh-CN" href="https://ds.hn/">
+<link rel="alternate" hreflang="en" href="https://ds.hn/en">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="en.html" title="ds.hn — DeepSeek Harness Network">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--accent)">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z"/>
+      </svg>
+      ds.hn
+    </a>
+    <nav class="nav-links">
+      <a class="opt" href="#features">Features</a>
+      <a class="opt" href="#e2e">Encryption</a>
+      <a class="opt" href="#how">How it works</a>
+      <a href="#start">Get started</a>
+      <a class="opt" href="#faq">FAQ</a>
+      <a href="https://github.com/jsdvjx/dshn-site">GitHub</a>
+      <span class="lang"><a href="./">中文</a><a class="on" href="en.html">EN</a></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <div class="wrap hero">
+    <span class="badge">ds.hn — <b>D</b>eep<b>S</b>eek <b>H</b>arness <b>N</b>etwork</span>
+    <h1>Your local dsh,<br><span class="grad">safely on the public internet</span></h1>
+    <p class="sub">
+      One subdomain and one password are the entire credential. Install the plugin,
+      pick a name in a dialog, and your locally-running dsh gets a login-gated public
+      address — reachable from your phone, from anywhere. Turn on
+      <strong>end-to-end encryption</strong> and everything crossing the relay is ciphertext.
+    </p>
+    <div class="url-demo">
+      <span class="lock">🔒</span>
+      <span>https://<span class="you">yourname</span>.ds.hn</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#start">Get started →</a>
+      <a class="btn btn-ghost" href="#e2e">End-to-end encryption</a>
+    </div>
+  </div>
+
+  <section id="why">
+    <div class="wrap">
+      <span class="kicker">Background</span>
+      <h2>Why ds.hn exists</h2>
+      <p class="lead">
+        The name stands for <strong>DeepSeek Harness Network</strong> — a public
+        doorway for every locally-running dsh (DeepSeek Harness). dsh is a web UI
+        that runs on your own machine. That's great — until you want to continue a
+        session from your phone, check on a long task from outside, or hand the UI
+        to a colleague for a look. Then you need to expose <code>127.0.0.1</code>
+        to the internet, and there are two traps:
+      </p>
+      <p class="lead">
+        <strong>First, generic tunnels simply don't work.</strong> dsh's
+        <code>/api</code> sits behind a browser-trust fence: any request whose Host
+        isn't loopback gets a 403. ngrok, frp and friends forward the public Host
+        verbatim — the page loads, every API call fails.
+      </p>
+      <p class="lead">
+        <strong>Second, a bare exposure hands out a remote shell.</strong> dsh ships
+        bash and filesystem tools. An ungated public dsh is a terminal on your
+        machine that anyone can use.
+      </p>
+      <p class="lead">
+        dshn solves both at once precisely because it is a plugin: inside dsh it
+        rewrites each forwarded request's Host/Origin back to loopback, so the trust
+        fence passes it as a local request; meanwhile every public visitor must get
+        through the relay's login gate first. Security lives in the gate, not in
+        fighting the fence.
+      </p>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <span class="kicker">Capabilities</span>
+      <h2>Everything included, out of the box</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">⚡️</div>
+          <h3>One-minute signup, zero approval</h3>
+          <p>A subdomain prefix plus a password — that's the whole credential. No tokens, no env vars, no review queue. First come, first served: whoever claims a free subdomain sets its password (stored server-side only as a scrypt hash).</p>
+        </div>
+        <div class="card">
+          <div class="ico">🚪</div>
+          <h3>Login gate</h3>
+          <p>Public visitors must present the same password, exchanged for a host-scoped, HMAC-signed cookie before anything is proxied. 8 wrong guesses in 15 minutes locks that visitor's IP out for 10 — attackers can't lock <em>you</em> out.</p>
+        </div>
+        <div class="card hl">
+          <div class="ico">🔐</div>
+          <h3>End-to-end encryption</h3>
+          <p>Set a separate E2E password (never sent to any server) and API content is sealed with AES-256-GCM — the relay operator and Cloudflare see only ciphertext. <a href="#e2e">Learn more →</a></p>
+        </div>
+        <div class="card">
+          <div class="ico">🌍</div>
+          <h3>Cloudflare edge</h3>
+          <p>All <code>*.ds.hn</code> traffic rides Cloudflare's global edge: free DDoS protection, WAF, TLS, Anycast acceleration — and the origin IP stays hidden.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🧩</div>
+          <h3>Native to dsh</h3>
+          <p>Configuration lives in dsh's own Settings under "Public forwarding"; a persistent sidebar entry shows live tunnel latency (~18ms measured through Cloudflare). Not a bolt-on script — a first-class plugin.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🔁</div>
+          <h3>Self-healing connection</h3>
+          <p>Both ends heartbeat every 25 seconds and reconnect automatically. Credentials persist in local config, so the tunnel comes back on its own after a dsh restart.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📡</div>
+          <h3>Full protocol replay</h3>
+          <p>HTTP and dsh's event WebSockets are replayed in full over one multiplexed WSS. A realistic page load of 40 bundles completes with zero failures.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🛡</div>
+          <h3>Management stays on-machine</h3>
+          <p>The plugin's management routes return 404 through the tunnel — reconfiguring or reading the password only works on your own machine. Subdomains are ≥4 chars, passwords ≥8, and disconnecting asks twice.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="e2e">
+    <div class="wrap">
+      <span class="kicker">End-to-end encryption</span>
+      <h2>Ciphertext through the middle, plaintext only at the ends</h2>
+      <p class="lead">
+        The login gate keeps strangers out; end-to-end encryption goes further —
+        <strong>not even the relay operator or Cloudflare can read your session
+        content</strong>. You set one extra 🔒 E2E password that is never sent to any
+        server: your browser encrypts with it, your machine decrypts with it, and
+        every hop in between handles only ciphertext.
+      </p>
+      <div class="cflow">
+        <div class="cnode clear">
+          <div class="ci">🔓</div>
+          <div class="ct">Your browser</div>
+          <div class="cd">enter the E2E password<br>encrypt / decrypt locally</div>
+        </div>
+        <div class="carrow"><b>→</b>AES-256-GCM<br>ciphertext</div>
+        <div class="cnode">
+          <div class="ci">☁️</div>
+          <div class="ct">Cloudflare</div>
+          <div class="cd">sees ciphertext only</div>
+        </div>
+        <div class="carrow"><b>→</b>ciphertext</div>
+        <div class="cnode">
+          <div class="ci">🖥</div>
+          <div class="ct">Relay</div>
+          <div class="cd">sees ciphertext only</div>
+        </div>
+        <div class="carrow"><b>→</b>ciphertext</div>
+        <div class="cnode clear">
+          <div class="ci">🔓</div>
+          <div class="ct">Your machine</div>
+          <div class="cd">the plugin holds the key,<br>decrypts, hands to dsh</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🔑</div>
+          <h3>Key derivation</h3>
+          <p>The E2E password is stretched with PBKDF2-SHA256 (210,000 rounds, random salt) into an AES-256-GCM key. The salt is public; the password and key never leave your devices.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🙈</div>
+          <h3>Zero content on servers</h3>
+          <p>All API content and event streams crossing the relay and Cloudflare are ciphertext — even if the server were breached, captured traffic would be unreadable.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📦</div>
+          <h3>What gets sealed</h3>
+          <p><code>/api</code> requests and responses plus downstream event messages. The app shell and static assets stay plaintext so the browser can bootstrap.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎚</div>
+          <h3>Set once, opt-in</h3>
+          <p>Fill the 🔒 field in the setup panel once. Remote visitors see an unlock prompt on first visit and enter the same E2E password. Local <code>127.0.0.1</code> access is untouched.</p>
+        </div>
+      </div>
+      <p class="e2e-note">
+        Honest boundary: this defeats a passive or curious relay and after-the-fact data
+        breaches. The page's JS is still served by the relay, so it does not defeat a relay
+        that actively tampers with the page — see <a href="#security">Security</a>.
+      </p>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <span class="kicker">How it works</span>
+      <h2>Four hops, one trick</h2>
+      <p class="lead">
+        Four hops sit between a browser and your machine. The relay is a self-hosted
+        dumb pipe — it checks passwords and moves bytes. The real magic is the last
+        hop, where the plugin turns each request back into what dsh considers a
+        local one.
+      </p>
+      <div class="flow">
+        <div class="fnode">
+          <span class="t">🌐 Browser</span>
+          <span class="d">opens https://alice.ds.hn, logs in with the password</span>
+        </div>
+        <div class="farrow">HTTPS</div>
+        <div class="fnode">
+          <span class="t">☁️ Cloudflare edge</span>
+          <span class="d">DDoS / WAF / TLS / Anycast; origin stays hidden</span>
+        </div>
+        <div class="farrow">origin pull</div>
+        <div class="fnode">
+          <span class="t">🖥 Relay</span>
+          <span class="d">login gate + subdomain claims; one multiplexed WSS per device</span>
+        </div>
+        <div class="farrow">WSS tunnel (outbound — no public IP or port forwarding needed)</div>
+        <div class="fnode hl">
+          <span class="t">🧩 dshn-agent plugin</span>
+          <span class="d">rewrites Host/Origin to 127.0.0.1, replays HTTP and WebSockets</span>
+        </div>
+        <div class="farrow">http://127.0.0.1:&lt;port&gt;</div>
+        <div class="fnode">
+          <span class="t">💻 Your local dsh</span>
+          <span class="d">the trust fence sees a local same-origin request and passes it</span>
+        </div>
+      </div>
+      <div class="flow-notes">
+        <div class="fnote">
+          <h4>Credentials are the registration</h4>
+          <p>There is no account system. The first plugin to connect with a free subdomain claims it and its password hash is persisted; every later connection and browser login must match it — squatting-proof by construction.</p>
+        </div>
+        <div class="fnote">
+          <h4>Outbound only, no public IP</h4>
+          <p>The plugin dials out over WSS to the relay. Home broadband, behind NAT, corporate networks — all fine, no router configuration.</p>
+        </div>
+        <div class="fnote">
+          <h4>The relay just moves bytes</h4>
+          <p>With end-to-end encryption on, the relay and Cloudflare carry only ciphertext; decryption happens exclusively in your browser and on your machine.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <span class="kicker">Sign up &amp; onboarding</span>
+      <h2>Live in four steps</h2>
+      <p class="lead">No signup page anywhere — registration happens inside dsh's own UI.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Install the plugin</h3>
+            <p>Add dshn-agent to your dsh profile:</p>
+            <pre>dsh plugin --profile web add /path/to/dshn/dist/dshn-agent</pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Start dsh and open it locally</h3>
+            <p>Start as usual, then open the local address in a browser:</p>
+            <pre>dsh --profile web
+<span class="c"># open http://127.0.0.1:3080</span></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Pick a name, set a password, hit "Connect"</h3>
+            <p>
+              A setup panel appears on first local open (also under
+              <strong>Settings → Public forwarding</strong>): choose a subdomain prefix
+              (≥4 chars) and an access password (≥8, with a strength meter), and we
+              recommend filling the 🔒 field with an <strong>end-to-end encryption
+              password</strong> right away — so the relay sees only ciphertext from day
+              one. Hit "Connect" and the panel shows your public URL.
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num"></div>
+          <div class="body">
+            <h3>Reach it from anywhere</h3>
+            <p>
+              Open <code>https://yourname.ds.hn</code> on your phone or any device and
+              log in with the same access password. With E2E on, an unlock prompt
+              follows — enter the E2E password and you're in.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>⚠️ Three things you must know</strong>
+        <ul>
+          <li><b>The password is the credential and cannot be recovered server-side.</b> Copy it from the panel before disconnecting — the claimed subdomain answers to this password only.</li>
+          <li><b>Run exactly one plugin instance per subdomain.</b> Two machines with the same credentials knock each other off in a loop.</li>
+          <li><b>End-to-end encryption applies to remote access only.</b> Opening 127.0.0.1 locally shows no unlock prompt — by design, not by failure.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="security">
+    <div class="wrap">
+      <span class="kicker">Security</span>
+      <h2>Boundaries, stated plainly</h2>
+      <p class="lead">A publicly reachable dsh is, at heart, a remote shell. dshn puts both the risk and its limits on the table:</p>
+      <div class="sec-list">
+        <div class="sec-item"><span class="mark">✅</span><p><strong>The login gate cannot be disabled.</strong> Nothing is proxied to your machine before the password is verified and exchanged for a signed cookie.</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>Brute force is rate-limited.</strong> 8 wrong guesses in 15 minutes → a 10-minute lockout, keyed on (subdomain, visitor IP) — an attacker only locks themselves out.</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>Management routes never leave your machine.</strong> Reading the password, reconfiguring, or disconnecting all 404 through the tunnel, even for a logged-in visitor.</p></div>
+        <div class="sec-item"><span class="mark">✅</span><p><strong>E2E defeats the curious relay.</strong> With it on, API content is sealed with AES-256-GCM; the relay operator and Cloudflare see ciphertext, and a server breach yields nothing readable.</p></div>
+        <div class="sec-item"><span class="mark">⚠️</span><p><strong>It does not defeat an actively malicious relay.</strong> The page itself (its JS) is still served by the relay, so a relay that tampers with the page could in principle bypass E2E. Fixing that takes TLS passthrough or a native client — we don't pretend otherwise.</p></div>
+        <div class="sec-item"><span class="mark">💡</span><p><strong>Heavy throughput can go direct.</strong> Cloudflare may reset the tunnel under sustained load; the plugin supports a direct-to-origin mode (with a pinned self-signed cert) that bypasses the edge.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <span class="kicker">FAQ</span>
+      <h2>Common questions</h2>
+      <div class="faq">
+        <details>
+          <summary>What does the name ds.hn mean?</summary>
+          <div class="a">
+            <b>D</b>eep<b>S</b>eek <b>H</b>arness <b>N</b>etwork — a network of locally-running
+            dsh (DeepSeek Harness) instances, each joining the public internet as
+            <code>yourname.ds.hn</code>.
+          </div>
+        </details>
+        <details>
+          <summary>Why not ngrok / frp / Cloudflare Tunnel?</summary>
+          <div class="a">
+            Generic tunnels forward the public Host verbatim, which dsh's <code>/api</code>
+            browser-trust fence rejects with 403 — the page loads, every API call fails. They
+            also ship with no login gate, leaving a remote shell naked on the internet. As a
+            dsh plugin, dshn rewrites Host/Origin internally and enforces login — both
+            problems solved at once.
+          </div>
+        </details>
+        <details>
+          <summary>How are subdomains assigned? Can mine be squatted?</summary>
+          <div class="a">
+            First come, first served: the first plugin to connect with a free subdomain claims
+            it and sets its password (stored only as a scrypt hash). From then on, connecting
+            with that subdomain requires the same password — a squatter without your password
+            cannot displace you.
+          </div>
+        </details>
+        <details>
+          <summary>What if I forget the password?</summary>
+          <div class="a">
+            It cannot be recovered server-side (the server holds only a hash). As long as your
+            plugin is still running locally, you can view and copy the current password from
+            the panel at any time — so copy it somewhere safe before disconnecting. Credentials
+            also persist in your local dsh config.
+          </div>
+        </details>
+        <details>
+          <summary>Where does traffic flow? Any limits?</summary>
+          <div class="a">
+            Browser → Cloudflare edge → self-hosted relay → the plugin on your machine → local
+            dsh. Edge bandwidth is unmetered. Known limits: Cloudflare's free plan caps a
+            single request body at 100MB, and sustained heavy throughput is better served by
+            the direct-to-origin mode.
+          </div>
+        </details>
+        <details>
+          <summary>Does my machine need a public IP or port forwarding?</summary>
+          <div class="a">
+            No. The plugin dials an outbound WSS connection to the relay — home broadband,
+            NAT, and corporate networks all work.
+          </div>
+        </details>
+        <details>
+          <summary>What exactly does end-to-end encryption cover?</summary>
+          <div class="a">
+            <code>/api</code> request/response bodies and downstream event messages
+            (PBKDF2-SHA256 with 210,000 rounds → AES-256-GCM). The app shell and static
+            assets stay plaintext so the browser can bootstrap. The E2E password is never
+            sent to a server; visitors enter it in the browser and decryption happens locally.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap frow">
+    <span>ds.hn · DeepSeek Harness Network — your local dsh, safely public</span>
+    <span><a href="./">中文</a> · <a href="https://github.com/jsdvjx/dshn-site">Site source</a> · self-hosted relay · Cloudflare edge</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -3,200 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ds.hn — 把本地 dsh 安全地开到公网</title>
-<meta name="description" content="dshn 是一个 dsh (DeepSeek Harness) 插件：一个子域、一个密码，把你本地运行的 dsh 安全地发布到 你的名字.ds.hn — 登录门禁、可选端到端加密、Cloudflare 边缘加速。">
-<style>
-  :root {
-    --bg: #fafafa;
-    --bg-soft: #ffffff;
-    --bg-inset: #f0f0f2;
-    --text: #1a1a20;
-    --text-soft: #55555f;
-    --text-faint: #8a8a96;
-    --line: #e4e4e9;
-    --accent: #4f46e5;
-    --accent-soft: #eef2ff;
-    --accent-text: #4338ca;
-    --ok: #059669;
-    --warn-bg: #fffbeb;
-    --warn-line: #f3e0a8;
-    --warn-text: #92600a;
-    --code-bg: #16161d;
-    --code-text: #e6e6ef;
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0e0e13;
-      --bg-soft: #16161d;
-      --bg-inset: #1d1d26;
-      --text: #ececf2;
-      --text-soft: #a8a8b6;
-      --text-faint: #71717e;
-      --line: #26262f;
-      --accent: #818cf8;
-      --accent-soft: #1e1e33;
-      --accent-text: #a5b0fc;
-      --ok: #34d399;
-      --warn-bg: #26200e;
-      --warn-line: #4a3c14;
-      --warn-text: #e0b95d;
-      --code-bg: #101018;
-      --code-text: #dcdce6;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-      "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-    line-height: 1.7;
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
-
-  /* ---------- nav ---------- */
-  header {
-    position: sticky; top: 0; z-index: 10;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--line);
-  }
-  .nav { display: flex; align-items: center; gap: 24px; height: 60px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
-  .brand svg { display: block; }
-  .nav-links { display: flex; gap: 20px; margin-left: auto; }
-  .nav-links a { color: var(--text-soft); text-decoration: none; font-size: 14.5px; }
-  .nav-links a:hover { color: var(--text); }
-  @media (max-width: 640px) { .nav-links a.opt { display: none; } }
-
-  /* ---------- hero ---------- */
-  .hero { padding: 88px 0 72px; text-align: center; }
-  .hero .badge {
-    display: inline-block; font-size: 13px; padding: 4px 14px; border-radius: 999px;
-    background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--line);
-    margin-bottom: 24px;
-  }
-  .hero h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.2; letter-spacing: -0.02em; font-weight: 800; }
-  .hero h1 .grad {
-    background: linear-gradient(90deg, var(--accent), #9333ea);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero .sub { max-width: 640px; margin: 24px auto 0; color: var(--text-soft); font-size: 18px; }
-  .hero .url-demo {
-    display: inline-flex; align-items: center; gap: 8px; margin-top: 28px;
-    font-family: var(--mono); font-size: 17px;
-    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px 22px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
-  }
-  .url-demo .lock { color: var(--ok); }
-  .url-demo .you { color: var(--accent-text); font-weight: 700; }
-  .cta-row { margin-top: 36px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-block; padding: 12px 26px; border-radius: 10px; font-size: 16px;
-    font-weight: 600; text-decoration: none; border: 1px solid transparent;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { filter: brightness(1.08); }
-  .btn-ghost { border-color: var(--line); color: var(--text); background: var(--bg-soft); }
-  .btn-ghost:hover { border-color: var(--text-faint); }
-
-  /* ---------- sections ---------- */
-  section { padding: 72px 0; border-top: 1px solid var(--line); }
-  .kicker { color: var(--accent-text); font-weight: 700; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
-  h2 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.01em; margin: 8px 0 16px; }
-  .lead { color: var(--text-soft); font-size: 17px; max-width: 720px; }
-  .lead + .lead { margin-top: 14px; }
-  .lead strong { color: var(--text); }
-
-  /* ---------- feature grid ---------- */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; margin-top: 40px; }
-  .card {
-    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 14px;
-    padding: 22px 22px 20px;
-  }
-  .card .ico { font-size: 22px; }
-  .card h3 { font-size: 16.5px; margin: 10px 0 6px; }
-  .card p { font-size: 14.5px; color: var(--text-soft); }
-  .card code { font-family: var(--mono); font-size: 13px; background: var(--bg-inset); padding: 1px 6px; border-radius: 5px; }
-
-  /* ---------- flow diagram ---------- */
-  .flow { margin-top: 44px; display: flex; flex-direction: column; align-items: center; gap: 0; }
-  .fnode {
-    width: 100%; max-width: 560px; background: var(--bg-soft); border: 1px solid var(--line);
-    border-radius: 12px; padding: 14px 20px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
-  }
-  .fnode .t { font-weight: 700; font-size: 15.5px; white-space: nowrap; }
-  .fnode .d { color: var(--text-soft); font-size: 13.5px; }
-  .fnode.hl { border-color: var(--accent); background: var(--accent-soft); }
-  .farrow { color: var(--text-faint); font-size: 13px; padding: 6px 0; display: flex; align-items: center; gap: 8px; font-family: var(--mono); }
-  .farrow::before { content: "↓"; color: var(--accent-text); font-size: 16px; }
-  .flow-notes { margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-  .fnote { border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; }
-  .fnote h4 { font-size: 15px; margin-bottom: 4px; }
-  .fnote p { font-size: 14px; color: var(--text-soft); }
-
-  /* ---------- steps ---------- */
-  .steps { margin-top: 40px; display: flex; flex-direction: column; gap: 28px; counter-reset: step; }
-  .step { display: flex; gap: 18px; }
-  .step .num {
-    counter-increment: step; flex: 0 0 34px; height: 34px; border-radius: 50%;
-    background: var(--accent); color: #fff; font-weight: 700; font-size: 15px;
-    display: flex; align-items: center; justify-content: center; margin-top: 2px;
-  }
-  .step .num::before { content: counter(step); }
-  .step h3 { font-size: 17.5px; margin-bottom: 6px; }
-  .step p { color: var(--text-soft); font-size: 15px; }
-  .step .body { min-width: 0; flex: 1; }
-  pre {
-    margin-top: 12px; background: var(--code-bg); color: var(--code-text);
-    border-radius: 10px; padding: 14px 18px; overflow-x: auto;
-    font-family: var(--mono); font-size: 13.5px; line-height: 1.6;
-  }
-  pre .c { color: #7c7c90; }
-  .callout {
-    margin-top: 36px; background: var(--warn-bg); border: 1px solid var(--warn-line);
-    border-radius: 12px; padding: 18px 22px; color: var(--warn-text); font-size: 14.5px;
-  }
-  .callout strong { display: block; margin-bottom: 6px; font-size: 15px; }
-  .callout ul { margin-left: 18px; }
-  .callout li + li { margin-top: 4px; }
-
-  /* ---------- security ---------- */
-  .sec-list { margin-top: 32px; display: flex; flex-direction: column; gap: 18px; max-width: 760px; }
-  .sec-item { display: flex; gap: 14px; align-items: baseline; }
-  .sec-item .mark { flex: 0 0 auto; font-size: 16px; }
-  .sec-item p { color: var(--text-soft); font-size: 15px; }
-  .sec-item p strong { color: var(--text); }
-
-  /* ---------- faq ---------- */
-  .faq { margin-top: 32px; max-width: 760px; }
-  details {
-    border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft);
-    padding: 0 20px; margin-bottom: 12px;
-  }
-  summary { cursor: pointer; font-weight: 600; font-size: 15.5px; padding: 16px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; }
-  summary::-webkit-details-marker { display: none; }
-  summary::after { content: "+"; color: var(--text-faint); font-size: 20px; font-weight: 400; }
-  details[open] summary::after { content: "–"; }
-  details .a { padding: 0 0 18px; color: var(--text-soft); font-size: 14.5px; }
-  details .a code { font-family: var(--mono); font-size: 13px; background: var(--bg-inset); padding: 1px 6px; border-radius: 5px; }
-
-  /* ---------- footer ---------- */
-  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; color: var(--text-faint); font-size: 14px; }
-  footer .frow { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-  footer a { color: var(--text-soft); text-decoration: none; }
-  footer a:hover { color: var(--text); }
-</style>
+<title>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</title>
+<meta name="description" content="ds.hn（DeepSeek Harness Network）：一个子域、一个密码，把你本地运行的 dsh 安全地发布到 你的名字.ds.hn — 登录门禁、端到端加密、Cloudflare 边缘加速。">
+<link rel="alternate" hreflang="zh-CN" href="https://ds.hn/">
+<link rel="alternate" hreflang="en" href="https://ds.hn/en">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
 
 <header>
   <div class="wrap nav">
-    <a class="brand" href="#">
+    <a class="brand" href="./" title="ds.hn — DeepSeek Harness Network">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--accent)">
         <circle cx="12" cy="12" r="9"/>
         <path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z"/>
@@ -205,11 +23,12 @@
     </a>
     <nav class="nav-links">
       <a class="opt" href="#features">功能</a>
+      <a class="opt" href="#e2e">加密</a>
       <a class="opt" href="#how">原理</a>
       <a href="#start">快速开始</a>
-      <a class="opt" href="#security">安全</a>
       <a class="opt" href="#faq">FAQ</a>
       <a href="https://github.com/jsdvjx/dshn-site">GitHub</a>
+      <span class="lang"><a class="on" href="./">中文</a><a href="en.html">EN</a></span>
     </nav>
   </div>
 </header>
@@ -217,11 +36,12 @@
 <main>
 
   <div class="wrap hero">
-    <span class="badge">dshn · dsh (DeepSeek Harness) 公网转发插件</span>
+    <span class="badge">ds.hn — <b>D</b>eep<b>S</b>eek <b>H</b>arness <b>N</b>etwork</span>
     <h1>把本地 dsh<br><span class="grad">安全地开到公网</span></h1>
     <p class="sub">
       一个子域、一个密码，就是全部凭据。装上插件、在对话框里起个名字，
       你本地运行的 dsh 就有了带登录门禁的公网地址 —— 手机、外网、随处可达。
+      开启<strong>端到端加密</strong>后，内容穿过中继时只是密文。
     </p>
     <div class="url-demo">
       <span class="lock">🔒</span>
@@ -229,21 +49,23 @@
     </div>
     <div class="cta-row">
       <a class="btn btn-primary" href="#start">快速开始 →</a>
-      <a class="btn btn-ghost" href="#how">它是怎么工作的</a>
+      <a class="btn btn-ghost" href="#e2e">端到端加密</a>
     </div>
   </div>
 
   <section id="why">
     <div class="wrap">
       <span class="kicker">背景</span>
-      <h2>为什么需要 dshn</h2>
+      <h2>为什么需要 ds.hn</h2>
       <p class="lead">
+        ds.hn 的名字来自 <strong>DeepSeek Harness Network</strong> ——
+        为每一个本地运行的 dsh（DeepSeek Harness）提供一个公网入口。
         dsh 是跑在你自己机器上的本地 Web UI。它很好用 —— 直到你想在手机上继续会话、
         出门后接着看任务进度，或者把界面递给同事看一眼。这时你需要把
-        <code style="font-family: var(--mono); font-size: 14px;">127.0.0.1</code> 暴露到公网，而这有两个坑：
+        <code>127.0.0.1</code> 暴露到公网，而这有两个坑：
       </p>
       <p class="lead">
-        <strong>其一，普通隧道根本打不通。</strong> dsh 的 <code style="font-family: var(--mono); font-size: 14px;">/api</code>
+        <strong>其一，普通隧道根本打不通。</strong> dsh 的 <code>/api</code>
         有一道浏览器信任栅栏：请求的 Host 不是本机回环就直接 403。ngrok、frp 这类通用隧道原样转发公网
         Host，页面能开、接口全挂。
       </p>
@@ -252,7 +74,7 @@
         一个没有门禁的公网 dsh，就是任何人都能用的你机器上的终端。
       </p>
       <p class="lead">
-        dshn 用「插件」这个身份同时解决两件事：它在 dsh 内部把每个转发请求的 Host/Origin
+        dshn 插件用「插件」这个身份同时解决两件事：它在 dsh 内部把每个转发请求的 Host/Origin
         回写为本机回环，信任栅栏照常放行；同时所有公网访问都必须先过中继的登录门禁 ——
         安全由门禁负责，而不是靠栅栏硬扛。
       </p>
@@ -274,10 +96,10 @@
           <h3>登录门禁</h3>
           <p>公网访客必须输入同一密码，换取按域名限定、HMAC 签名的 Cookie 后才会被代理。15 分钟内错 8 次即锁定 10 分钟，且按访客 IP 计，攻击者锁不住你自己。</p>
         </div>
-        <div class="card">
+        <div class="card hl">
           <div class="ico">🔐</div>
-          <h3>可选端到端加密</h3>
-          <p>再设一个独立的 E2E 密码（永不发给服务器），API 内容以 PBKDF2 → AES-256-GCM 封装，中继只见密文。访客在浏览器里再输一次即可解锁。</p>
+          <h3>端到端加密</h3>
+          <p>再设一个独立的 E2E 密码（永不发给服务器），API 内容以 AES-256-GCM 封装 —— 中继运营方与 Cloudflare 都只见密文。<a href="#e2e">了解更多 →</a></p>
         </div>
         <div class="card">
           <div class="ico">🌍</div>
@@ -305,6 +127,69 @@
           <p>插件的管理接口在隧道里一律 404，改配置、看密码只能在你自己机器上进行。子域至少 4 字符、密码至少 8 位，断开连接需二次确认。</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="e2e">
+    <div class="wrap">
+      <span class="kicker">端到端加密</span>
+      <h2>密文穿过中继，明文只在两端</h2>
+      <p class="lead">
+        登录门禁挡住陌生人；端到端加密更进一步 —— 你的会话内容，<strong>连中继运营方、连
+        Cloudflare 都读不到</strong>。再设一个独立的 🔒 E2E 密码，它永远不会发给任何服务器：
+        你的浏览器用它加密，你的机器用它解密，中间每一跳经手的都只是密文。
+      </p>
+      <div class="cflow">
+        <div class="cnode clear">
+          <div class="ci">🔓</div>
+          <div class="ct">你的浏览器</div>
+          <div class="cd">输入 E2E 密码<br>本地加解密</div>
+        </div>
+        <div class="carrow"><b>→</b>AES-256-GCM<br>密文</div>
+        <div class="cnode">
+          <div class="ci">☁️</div>
+          <div class="ct">Cloudflare</div>
+          <div class="cd">只见密文</div>
+        </div>
+        <div class="carrow"><b>→</b>密文</div>
+        <div class="cnode">
+          <div class="ci">🖥</div>
+          <div class="ct">中继</div>
+          <div class="cd">只见密文</div>
+        </div>
+        <div class="carrow"><b>→</b>密文</div>
+        <div class="cnode clear">
+          <div class="ci">🔓</div>
+          <div class="ct">你的机器</div>
+          <div class="cd">插件持有密钥<br>本地解密后交给 dsh</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🔑</div>
+          <h3>密钥派生</h3>
+          <p>E2E 密码经 PBKDF2-SHA256（210,000 轮 + 随机盐）派生出 AES-256-GCM 密钥。盐是公开的；密码与密钥永不出你的设备。</p>
+        </div>
+        <div class="card">
+          <div class="ico">🙈</div>
+          <h3>服务器零内容</h3>
+          <p>中继与 Cloudflare 经手的 API 内容与事件流全部是密文 —— 即使服务器被入侵，攻击者翻查到的历史流量也不可读。</p>
+        </div>
+        <div class="card">
+          <div class="ico">📦</div>
+          <h3>加密范围</h3>
+          <p><code>/api</code> 请求与响应、下行事件流全部封装；应用外壳与静态资源保持明文，浏览器才能完成引导。</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎚</div>
+          <h3>一次设置，按需开启</h3>
+          <p>注册面板的 🔒 一栏填一次即可；远程访客首次打开会看到解锁框，输入同一 E2E 密码即通。本机 <code>127.0.0.1</code> 访问不受影响。</p>
+        </div>
+      </div>
+      <p class="e2e-note">
+        边界诚实说：它防的是「被动 / 好奇」的中继与服务器数据泄露；页面 JS 仍由中继下发，所以它不防主动篡改页面的中继
+        —— 详见<a href="#security">安全边界</a>。
+      </p>
     </div>
   </section>
 
@@ -387,8 +272,9 @@
           <div class="body">
             <h3>起名、设密码，点「连接」</h3>
             <p>
-              首次打开会自动弹出注册面板（之后也能在 <strong style="color: var(--text)">设置 → 公网转发</strong> 找到）：
-              填一个子域前缀（≥4 字符）和一个访问密码（≥8 位，带强度提示），可顺手在 🔒 一栏设置可选的端到端加密密码。
+              首次打开会自动弹出注册面板（之后也能在 <strong>设置 → 公网转发</strong> 找到）：
+              填一个子域前缀（≥4 字符）和一个访问密码（≥8 位，带强度提示），并建议顺手在 🔒 一栏设置
+              <strong>端到端加密密码</strong> —— 让中继从第一天起就只见密文。
               点「连接」，面板立即显示你的公网地址。
             </p>
           </div>
@@ -398,7 +284,7 @@
           <div class="body">
             <h3>随处访问</h3>
             <p>
-              在手机或任何设备上打开 <code style="font-family: var(--mono); font-size: 13.5px; background: var(--bg-inset); padding: 1px 6px; border-radius: 5px;">https://你的子域.ds.hn</code>，
+              在手机或任何设备上打开 <code>https://你的子域.ds.hn</code>，
               输入同一个访问密码登录。如果设了端到端加密，页面会再弹一道解锁框，输入 E2E 密码即可。
             </p>
           </div>
@@ -437,6 +323,13 @@
       <h2>常见问题</h2>
       <div class="faq">
         <details>
+          <summary>ds.hn 这个名字是什么意思？</summary>
+          <div class="a">
+            <b>D</b>eep<b>S</b>eek <b>H</b>arness <b>N</b>etwork —— 由一个个本地运行的
+            dsh（DeepSeek Harness）组成的网络，每个实例以 <code>你的名字.ds.hn</code> 的形式接入公网。
+          </div>
+        </details>
+        <details>
           <summary>为什么不用 ngrok / frp / Cloudflare Tunnel？</summary>
           <div class="a">
             通用隧道原样转发公网 Host，会被 dsh 的 <code>/api</code> 浏览器信任栅栏 403 —— 页面打得开，接口全报错。
@@ -472,7 +365,7 @@
           </div>
         </details>
         <details>
-          <summary>端到端加密加密了什么？</summary>
+          <summary>端到端加密具体加密了什么？</summary>
           <div class="a">
             <code>/api</code> 请求响应内容与下行事件消息（PBKDF2-SHA256 21 万轮派生密钥 → AES-256-GCM）。
             应用外壳与静态资源保持明文以便浏览器引导。E2E 密码永远不会发给服务器，访客在浏览器里输入后本地解密。
@@ -486,8 +379,8 @@
 
 <footer>
   <div class="wrap frow">
-    <span>ds.hn · dshn — 把本地 dsh 安全地开到公网</span>
-    <span><a href="https://github.com/jsdvjx/dshn-site">网站源码</a> · 自托管中继 · Cloudflare 边缘</span>
+    <span>ds.hn · DeepSeek Harness Network — 把本地 dsh 安全地开到公网</span>
+    <span><a href="en.html">English</a> · <a href="https://github.com/jsdvjx/dshn-site">网站源码</a> · 自托管中继 · Cloudflare 边缘</span>
   </div>
 </footer>
 
