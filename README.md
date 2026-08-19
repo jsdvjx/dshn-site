@@ -14,14 +14,15 @@ python3 -m http.server 8000
 
 ## 部署
 
-推送到 `main` 后，`.github/workflows/pages.yml` 自动发布到 GitHub Pages。
+**正式站 <https://ds.hn> 由 dshn 中继直接托管**（2026-08-19 上线）：relay 通过
+`DSHN_SITE=/opt/dshn/site/index.html` 在裸 apex 返回本页（按 mtime 热更新，无需
+重启服务），`www.ds.hn` 301 到 apex。发布更新：
 
-要把站点挂到 `ds.hn` 顶级域，有两个选项（DNS 都已在 Cloudflare）：
+```sh
+./deploy.sh    # scp index.html 到服务器，立即生效
+```
 
-1. **Cloudflare 指向 GitHub Pages**：把 apex 的回源从中继改为 Pages，并在仓库
-   Pages 设置里配置自定义域名。注意 apex 目前由 Origin Rule 路由到中继 `:8787`，
-   需要为 apex 单独豁免。
-2. **由中继直接托管**：把 `index.html` 作为中继在 apex（未匹配任何子域时）的
-   落地页返回，站点与隧道同源，无需动 DNS。
+另外推送到 `main` 后，`.github/workflows/pages.yml` 会同步发布一份预览镜像到
+GitHub Pages（<https://jsdvjx.github.io/dshn-site/>）。
 
 产品仓库（插件 + 中继源码）在私有 monorepo `dshn` 中，与本站分离。
